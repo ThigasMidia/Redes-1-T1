@@ -4,14 +4,16 @@
 #include <arpa/inet.h>
 #include <net/ethernet.h>
 #include <linux/if_packet.h>
+#include <sys/socket.h>
 #include <net/if.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <string.h>
 #include <stdio.h>
 
-#define MARCADOR_INI 126 // 01111110
-#define MAX_DADOS 127    
-#define MAX_BUFFER 131   
+#define MARCADOR_INI 126 //01111110
+#define MAX_DADOS 127   
+#define MAX_BUFFER 131 //127 + MARCADOR(1) + CHECKSUM(1) + TAM/SEQ/TIPO(2)
 
 //STRUCT DE PACOTES PARA ENVIO E RECEBIMENTO PELA REDE
 typedef struct pacote_t {

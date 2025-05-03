@@ -29,7 +29,7 @@ int cria_raw_socket(char* nome_interface_rede) {
             "Verifique se a interface de rede foi especificada corretamente.\n");
         exit(-1);
     }
- 
+    fprintf(stderr, "CRIOU O SOCKET!\n"); 
     return soquete;
 }
 
@@ -79,7 +79,7 @@ int encheBuffer(unsigned char *buffer, pacote_t *mensagem) {
 
 //TRANSFORMA UM BUFFER RECEBIDO EM UMA MENSAGEM
 void recebeMensagem(unsigned char *buffer, pacote_t *mensagem) {
-
+    unsigned char *comeco = buffer+4;
     //TAMANHO RECEBE OS 7 BITS MAIS SIGNIFICATIVOS DA SEGUNDA POSICAO DO BUFFER
     mensagem->tamanho = buffer[1] >> 1;
     //SEQUENCIA RECEBE O BIT MAIS SIGNIFICATIVO DE SEQUENCIA NA ULTIMA POSICAO DO BUFFER
@@ -87,13 +87,13 @@ void recebeMensagem(unsigned char *buffer, pacote_t *mensagem) {
     mensagem->sequencia = ((buffer[1] & 0x01) << 4) + (buffer[2] >> 4);
     //TIPO RECEBE OS 4 BITS MENOS SIGNIFICATIVOS ONDE ESTA O TIPO
     mensagem->tipo = buffer[2] & 0x0F;
-    
+     
     //COPIA PARA O CAMPO DE DADOS DA MENSAGEM O QUE ESTA ARMAZENADO NO BUFFER
-    memcpy(mensagem->dados, &buffer[4], mensagem->tamanho);
+    memcpy(mensagem->dados, comeco, mensagem->tamanho);
+
 }
 
 //UTILIZEI A MAIN PARA TESTAR TODAS AS FUNCOES ANTERIORES
-
 /*
 int main() {
     pacote_t mensagem, teste;
