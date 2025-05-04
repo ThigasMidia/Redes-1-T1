@@ -26,6 +26,9 @@ typedef struct pacote_t {
 //FUNCAO DISPONIBILIZADA PELO TODT
 int cria_raw_socket(char* nome_interface_rede);
 
+//
+void criaMensagem(pacote_t *mensagem, unsigned char tamanho, unsigned char sequencia, unsigned char tipo);
+
 /*FUNCAO QUE GERA O CHECKSUM ATRAVES DO BUFFER, 
     USADA TANTO PARA O CALCULO INICIAL COMO PARA A CHECAGEM POSTERIOR*/
 int checksum(unsigned char *buffer);
@@ -35,5 +38,14 @@ int encheBuffer(unsigned char *buffer, pacote_t *mensagem);
 
 //TRANSFORMA UM BUFFER RECEBIDO EM UMA STRUCT PACOTE_T
 void recebeMensagem(unsigned char *buffer, pacote_t *mensagem);
+
+//FAZ CHECKSUM DA MENSAGEM RECEBIDA
+int checaMensagem(unsigned char *buffer);
+
+//FAZ UM BOLO DE LARANJA MT GOSTOSO
+void enviaACK(unsigned char *buffer, int socket, unsigned char sequencia);
+
+//FAZ UM BOLO DE LIMAO MT GOSTOSO
+void enviaNACK(unsigned char *buffer, int socket, unsigned char sequencia);
 
 #endif

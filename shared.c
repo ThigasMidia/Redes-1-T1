@@ -33,6 +33,14 @@ int cria_raw_socket(char* nome_interface_rede) {
     return soquete;
 }
 
+//MONTA UMA MENSAGEM SEM DADOS
+void criaMensagem(pacote_t *mensagem, unsigned char tamanho, unsigned char sequencia, unsigned char tipo) {
+    
+    mensagem->tamanho = tamanho;
+    mensagem->sequencia = sequencia;
+    mensagem->tipo = tipo;
+}
+
 //CHECKSUM DE 4 EM 4 BITS DE TAMANHO, SEQUENCIA, TIPO E DADOS
 int checksum(unsigned char *buffer) {
     int sum = 0, tam;
@@ -72,7 +80,13 @@ int encheBuffer(unsigned char *buffer, pacote_t *mensagem) {
     
     //CHECKSUM ARMAZENADO NA POSICAO 4 DO BUFFER
     buffer[3] = checksum(buffer);
-    
+    if(mensagem->tamanho+4 < 14) {
+        int tam = mensagem->tamanho;
+        for(int i = tam+4; i < 14; i++) {
+            buffer[i] = 0;
+            mensagem->tamanho++;
+        }
+    }
     //DEVOLVE TAMANHO DO BUFFER PARA USO POSTERIOR
     return mensagem->tamanho+4;
 }
@@ -90,6 +104,33 @@ void recebeMensagem(unsigned char *buffer, pacote_t *mensagem) {
      
     //COPIA PARA O CAMPO DE DADOS DA MENSAGEM O QUE ESTA ARMAZENADO NO BUFFER
     memcpy(mensagem->dados, comeco, mensagem->tamanho);
+
+}
+
+//FAZ CHECKSUM
+int checaMensagem(unsigned char *buffer) {
+    if(buffer[0] == MARCADOR_INI && buffer[3] == checksum(buffer))
+        return 1;
+
+    return 0;
+}
+
+void enviaACK(unsigned char *buffer, int socket, unsigned char sequencia) {
+    pacote_t mensagem;
+    int tam;
+    criaMensagem(&mensagem, 0, sequencia, 0);
+    tam = encheBuffer(buffer, &mensagem);
+    if(send(socket, buffer, tam, 0) < 0) 
+        perror("ERRO AO ENVIAR ACK");
+}
+
+void enviaNACK(unsigned char *buffer, int socket, unsigned char sequencia) {
+    pacote_t mensagem;
+    int tam;
+    criaMensagem(&mensagem, 0, sequencia, 1);
+    tam = encheBuffer(buffer, &mensagem);
+    if(send(socket, buffer, tam, 0) < 0) 
+        perror("ERRO AO ENVIAR NACK");
 
 }
 
