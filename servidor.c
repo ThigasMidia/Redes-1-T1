@@ -1,30 +1,43 @@
 #include "shared.h"
+#include "serverFunc.h"
 
 int main() {
-    int soquete = cria_raw_socket("veth1");
+    srand(time(NULL));
+    int socket = cria_raw_socket("veth1");
     unsigned char *buffer;
     buffer = malloc(MAX_BUFFER);
-    ssize_t num_bytes;
     pacote_t mensagem;
+    int fim = 1;
+    int cont = 0;
+    tesouro *t;
+    t = malloc(sizeof(tesouro)*8);
+    criaTesouros(t);
+    for(int i = 0; i < 8; i++)
+        printf("%dx%d\n", t[i].x, t[i].y);
     
     //TA FUNFANDO!!!!!!
-    while ((num_bytes = recv(soquete, buffer, MAX_BUFFER, 0)) > 0) {
-        printf("Recebido %zd bytes\n", num_bytes);
-        
-        if(checaMensagem(buffer))
+    while (fim) {
+        recv(socket, buffer, MAX_BUFFER, 0); 
+        int ret = checaMensagem(buffer); 
+        if(ret == 1) {
             recebeMensagem(buffer, &mensagem);
-        else
+            printf("Tipo: %d\n", mensagem.tipo);
+            for(int i = 0; i < mensagem.tamanho; i++)
+                printf("%d ", mensagem.dados[i]);
+                printf("\n");
+            enviaACK(buffer, socket, cont);
+            cont++;
+            fim--;
+        }
+        else if(ret == -1){
             printf("MENSAGEM ERRADA!!!!\n");
-
-        printf("Tamanho: %d, Sequência: %d, Tipo: %d, Dados: ", 
-                mensagem.tamanho, mensagem.sequencia, mensagem.tipo);
-        for(int i = 0; i < mensagem.tamanho; i++)
-            printf("%d ", mensagem.dados[i]);
-        printf("\n");
+            enviaNACK(buffer, socket, cont);
+            cont++;
+        }
     }
     printf("\n");
 
-    close(soquete);
+    close(socket);
 
     return 0;
 }

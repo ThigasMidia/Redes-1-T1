@@ -34,11 +34,13 @@ int cria_raw_socket(char* nome_interface_rede) {
 }
 
 //MONTA UMA MENSAGEM SEM DADOS
-void criaMensagem(pacote_t *mensagem, unsigned char tamanho, unsigned char sequencia, unsigned char tipo) {
+void criaMensagem(pacote_t *mensagem, unsigned char tamanho, unsigned char sequencia, unsigned char tipo, unsigned char *dados) {
     
     mensagem->tamanho = tamanho;
     mensagem->sequencia = sequencia;
     mensagem->tipo = tipo;
+    if(tamanho)
+        memcpy(mensagem->dados, dados, tamanho);
 }
 
 //CHECKSUM DE 4 EM 4 BITS DE TAMANHO, SEQUENCIA, TIPO E DADOS
@@ -107,30 +109,33 @@ void recebeMensagem(unsigned char *buffer, pacote_t *mensagem) {
 
 }
 
-//FAZ CHECKSUM
+//CHECA: SE NAO É MENSAGEM, RETORNA 0. SE A MENSAGEM ESTA CORRETA, RETORNA 1. SE CHECKSUM ERRADO, RETORNA -1
 int checaMensagem(unsigned char *buffer) {
-    if(buffer[0] == MARCADOR_INI && buffer[3] == checksum(buffer))
-        return 1;
+    if(buffer[0] == MARCADOR_INI) {
+        if(buffer[3] == checksum(buffer))
+            return 1;
+        return -1;
+    }
 
     return 0;
 }
 
-void enviaACK(unsigned char *buffer, int socket, unsigned char sequencia) {
-    pacote_t mensagem;
-    int tam;
-    criaMensagem(&mensagem, 0, sequencia, 0);
-    tam = encheBuffer(buffer, &mensagem);
-    if(send(socket, buffer, tam, 0) < 0) 
-        perror("ERRO AO ENVIAR ACK");
+void enviaMensagem(int socket, unsigned char *buffer, pacote_t *mensagem) {
+    int tam = encheBuffer(buffer, mensagem);
+    if(send(socket, buffer, tam, 0) < 0)
+        perror("ERRO AO ENVIAR MENSAGEM");
 }
 
-void enviaNACK(unsigned char *buffer, int socket, unsigned char sequencia) {
+void enviaACK(unsigned char *buffer, int socket, unsigned char *sequencia) {
     pacote_t mensagem;
-    int tam;
-    criaMensagem(&mensagem, 0, sequencia, 1);
-    tam = encheBuffer(buffer, &mensagem);
-    if(send(socket, buffer, tam, 0) < 0) 
-        perror("ERRO AO ENVIAR NACK");
+    criaMensagem(&mensagem, 0, sequencia, 0, NULL);
+    enviaMensagem(socket, buffer, &mensagem);
+}
+
+void enviaNACK(unsigned char *buffer, int socket, unsigned char *sequencia) {
+    pacote_t mensagem;
+    criaMensagem(&mensagem, 0, sequencia, 1, NULL);
+    enviaMensagem(socket, buffer, &mensagem);
 
 }
 

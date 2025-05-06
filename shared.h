@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 
 #define MARCADOR_INI 126 //01111110
 #define MAX_DADOS 127   
@@ -27,7 +28,7 @@ typedef struct pacote_t {
 int cria_raw_socket(char* nome_interface_rede);
 
 //
-void criaMensagem(pacote_t *mensagem, unsigned char tamanho, unsigned char sequencia, unsigned char tipo);
+void criaMensagem(pacote_t *mensagem, unsigned char tamanho, unsigned char sequencia, unsigned char tipo, unsigned char *dados);
 
 /*FUNCAO QUE GERA O CHECKSUM ATRAVES DO BUFFER, 
     USADA TANTO PARA O CALCULO INICIAL COMO PARA A CHECAGEM POSTERIOR*/
@@ -41,6 +42,9 @@ void recebeMensagem(unsigned char *buffer, pacote_t *mensagem);
 
 //FAZ CHECKSUM DA MENSAGEM RECEBIDA
 int checaMensagem(unsigned char *buffer);
+
+//FAZ UMA CUCA MT GOSTOSA
+void enviaMensagem(int socket, unsigned char *buffer, pacote_t *mensagem);
 
 //FAZ UM BOLO DE LARANJA MT GOSTOSO
 void enviaACK(unsigned char *buffer, int socket, unsigned char sequencia);
