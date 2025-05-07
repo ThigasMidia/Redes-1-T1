@@ -5,6 +5,11 @@ typedef struct tesouro {
     unsigned char y;
 } tesouro;
 
+void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned char *sequencia);
+
+//envia mensagem tipo 9
+void enviaEOF(int socket, unsigned char *sequencia);
+
 tesouro aleatorizaTesouro();
 
 int comparaTesouros(tesouro t1, tesouro t2);

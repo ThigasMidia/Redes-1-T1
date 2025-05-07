@@ -34,10 +34,10 @@ int cria_raw_socket(char* nome_interface_rede) {
 }
 
 //MONTA UMA MENSAGEM SEM DADOS
-void criaMensagem(pacote_t *mensagem, unsigned char tamanho, unsigned char sequencia, unsigned char tipo, unsigned char *dados) {
+void criaMensagem(pacote_t *mensagem, unsigned char tamanho, unsigned char *sequencia, unsigned char tipo, unsigned char *dados) {
     
     mensagem->tamanho = tamanho;
-    mensagem->sequencia = sequencia;
+    mensagem->sequencia = (*sequencia);
     mensagem->tipo = tipo;
     if(tamanho)
         memcpy(mensagem->dados, dados, tamanho);
@@ -120,23 +120,42 @@ int checaMensagem(unsigned char *buffer) {
     return 0;
 }
 
-void enviaMensagem(int socket, unsigned char *buffer, pacote_t *mensagem) {
+void enviaMensagem(int socket, unsigned char *buffer, pacote_t *mensagem, unsigned char *sequencia) {
     int tam = encheBuffer(buffer, mensagem);
     if(send(socket, buffer, tam, 0) < 0)
         perror("ERRO AO ENVIAR MENSAGEM");
+    incrementaSequencia(sequencia);
 }
 
-void enviaACK(unsigned char *buffer, int socket, unsigned char *sequencia) {
+void enviaACK(int socket, unsigned char *sequencia) {
     pacote_t mensagem;
+    unsigned char *buffer;
+    buffer = malloc(MAX_BUFFER);
     criaMensagem(&mensagem, 0, sequencia, 0, NULL);
-    enviaMensagem(socket, buffer, &mensagem);
+    enviaMensagem(socket, buffer, &mensagem, sequencia);
+    free(buffer);
 }
 
-void enviaNACK(unsigned char *buffer, int socket, unsigned char *sequencia) {
+void enviaNACK(int socket, unsigned char *sequencia) {
     pacote_t mensagem;
+    unsigned char *buffer;
+    buffer = malloc(MAX_BUFFER);
     criaMensagem(&mensagem, 0, sequencia, 1, NULL);
-    enviaMensagem(socket, buffer, &mensagem);
+    enviaMensagem(socket, buffer, &mensagem, sequencia);
+    free(buffer);
+}
 
+int depoisDe(unsigned char sequencia1, unsigned char sequencia2) {
+
+    return (sequencia1 - sequencia2 + 32) % 32 < 16;
+}
+
+void incrementaSequencia(unsigned char *sequencia) {
+    (*sequencia) = ((*sequencia) + 1) % 32;
+}
+
+void decrementaSequencia(unsigned char *sequencia) {
+    (*sequencia) = ((*sequencia) + 31) % 32;
 }
 
 //UTILIZEI A MAIN PARA TESTAR TODAS AS FUNCOES ANTERIORES

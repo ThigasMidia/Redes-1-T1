@@ -28,7 +28,7 @@ typedef struct pacote_t {
 int cria_raw_socket(char* nome_interface_rede);
 
 //
-void criaMensagem(pacote_t *mensagem, unsigned char tamanho, unsigned char sequencia, unsigned char tipo, unsigned char *dados);
+void criaMensagem(pacote_t *mensagem, unsigned char tamanho, unsigned char *sequencia, unsigned char tipo, unsigned char *dados);
 
 /*FUNCAO QUE GERA O CHECKSUM ATRAVES DO BUFFER, 
     USADA TANTO PARA O CALCULO INICIAL COMO PARA A CHECAGEM POSTERIOR*/
@@ -44,12 +44,21 @@ void recebeMensagem(unsigned char *buffer, pacote_t *mensagem);
 int checaMensagem(unsigned char *buffer);
 
 //FAZ UMA CUCA MT GOSTOSA
-void enviaMensagem(int socket, unsigned char *buffer, pacote_t *mensagem);
+void enviaMensagem(int socket, unsigned char *buffer, pacote_t *mensagem, unsigned char *sequencia);
 
 //FAZ UM BOLO DE LARANJA MT GOSTOSO
-void enviaACK(unsigned char *buffer, int socket, unsigned char sequencia);
+void enviaACK(int socket, unsigned char *sequencia);
 
 //FAZ UM BOLO DE LIMAO MT GOSTOSO
-void enviaNACK(unsigned char *buffer, int socket, unsigned char sequencia);
+void enviaNACK(int socket, unsigned char *sequencia);
+
+//RETORNA 1 SE SEQUENCIA1 VEM DEPOIS DE SEQUENCIA2, RETORNA 0 CASO CONTRARIO
+int depoisDe(unsigned char sequencia1, unsigned char sequencia2);
+
+//
+void incrementaSequencia(unsigned char *sequencia);
+
+//
+void decrementaSequencia(unsigned char *sequencia);
 
 #endif
