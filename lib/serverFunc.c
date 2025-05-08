@@ -1,4 +1,4 @@
-#include "serverFunc.h"
+#include "../include/serverFunc.h"
 
 void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned char *sequencia) {
     FILE *arquivo = fopen(nome, "rb");

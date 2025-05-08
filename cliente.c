@@ -1,5 +1,5 @@
-#include "shared.h"
-#include "clientFunc.h"
+#include "./include/shared.h"
+#include "./include/clientFunc.h"
 
 int main() {
 

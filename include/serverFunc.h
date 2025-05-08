@@ -1,3 +1,6 @@
+#ifndef __SERVER_H__
+#define __SERVER_H__
+
 #include "shared.h"
 
 typedef struct tesouro {
@@ -15,3 +18,5 @@ tesouro aleatorizaTesouro();
 int comparaTesouros(tesouro t1, tesouro t2);
 
 void criaTesouros(tesouro *t);
+
+#endif

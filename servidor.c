@@ -1,5 +1,5 @@
-#include "shared.h"
-#include "serverFunc.h"
+#include "./include/shared.h"
+#include "./include/serverFunc.h"
 
 int main() {
     srand(time(NULL));

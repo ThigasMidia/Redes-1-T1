@@ -1,4 +1,4 @@
-#include "clientFunc.h"
+#include "../include/clientFunc.h"
 
 void recebeArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned char *sequencia) {
     FILE *arquivo = fopen(nome, "wb");
