@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
+#include <unistd.h>
 
 #define MARCADOR_INI 126 //01111110
 #define MAX_DADOS 127   

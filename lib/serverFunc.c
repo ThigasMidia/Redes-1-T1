@@ -12,15 +12,20 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
     unsigned char *bufferReceive, *dados;
     bufferReceive = malloc(MAX_BUFFER);
     dados = malloc(MAX_DADOS);
+    messageSend.tipo = 0;
+    int cont = 0;
     while(!terminado) {
+        cont++;
+        printf("TIPO/LIBERADO/CONT   %d/%d/%d\n", messageSend.tipo, liberado, cont);
         if(liberado) {
             if((bytes = fread(dados, 1, MAX_DADOS, arquivo)) > 0) {
                 criaMensagem(&messageSend, bytes, sequencia, 5, dados);
                 enviaMensagem(socket, bufferSend, &messageSend, sequencia);
                 liberado--;
             }
-            else 
+            else { 
                 terminado++;
+            }
         }
         else {
             recv(socket, bufferReceive, MAX_BUFFER, 0);
@@ -28,19 +33,27 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
             if(ret == 1) {
                 recebeMensagem(bufferReceive, &messageReceive);
                 sequenciaAtu = messageReceive.sequencia;
+                printf("ACEITOU!!!!!!!!!!!!!!!!!!!!!!!\n");
                 if(sequenciaAnt == 126)
                     sequenciaAnt = (sequenciaAtu + 31) % 32;
                 if(depoisDe(sequenciaAtu, sequenciaAnt)) {
-                    if(!messageReceive.tipo)
+                    if(!messageReceive.tipo) {
                         liberado++;
+                    }
                     else if(messageReceive.tipo == 1) {
                         decrementaSequencia(sequencia);
+                        for(int i = 0; i < MAX_BUFFER; i++) {
+                            printf("%d ", bufferSend[i]);
+                        }
+                        printf("\n");
+                        //criaMensagem(&messageSend, bytes, sequencia, 5, dados);
                         enviaMensagem(socket, bufferSend, &messageSend, sequencia);
                     }
                 }
             }
-            else if(ret == -1) 
+            else if(ret == -1) { 
                 enviaNACK(socket, sequencia);
+            }
             sequenciaAnt = sequenciaAtu;
         }
     }
@@ -63,7 +76,6 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
         else if(ret == -1)
             enviaNACK(socket, sequencia);
     }
-    printf("TERMINOU DE ENVIAR!!!!!!!\n");
     free(dados);
     free(bufferReceive);
 }
@@ -75,7 +87,6 @@ void enviaEOF(int socket, unsigned char *sequencia) {
     buffer = malloc(MAX_BUFFER);
     criaMensagem(&mensagem, 0, sequencia, 9, NULL);
     enviaMensagem(socket, buffer, &mensagem, sequencia);
-    printf("%d\n", buffer[2] & 0x0F);
     free(buffer);
 }
 

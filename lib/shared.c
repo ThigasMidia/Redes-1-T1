@@ -29,7 +29,6 @@ int cria_raw_socket(char* nome_interface_rede) {
             "Verifique se a interface de rede foi especificada corretamente.\n");
         exit(-1);
     }
-    fprintf(stderr, "CRIOU O SOCKET!\n"); 
     return soquete;
 }
 
@@ -82,15 +81,13 @@ int encheBuffer(unsigned char *buffer, pacote_t *mensagem) {
     
     //CHECKSUM ARMAZENADO NA POSICAO 4 DO BUFFER
     buffer[3] = checksum(buffer);
-    if(mensagem->tamanho+4 < 14) {
-        int tam = mensagem->tamanho;
-        for(int i = tam+4; i < 14; i++) {
-            buffer[i] = 0;
-            mensagem->tamanho++;
-        }
+    int tam = mensagem->tamanho + 4;
+    if(tam < 14) { 
+        memset(buffer + tam, 0, 14 - tam);
+        tam = 14;
     }
     //DEVOLVE TAMANHO DO BUFFER PARA USO POSTERIOR
-    return mensagem->tamanho+4;
+    return tam;
 }
 
 //TRANSFORMA UM BUFFER RECEBIDO EM UMA MENSAGEM
