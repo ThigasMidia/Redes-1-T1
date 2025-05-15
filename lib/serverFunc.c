@@ -24,7 +24,7 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
         if(liberado) {
             if(errorM) {
                 criaMensagem(&messageSend, bytes, sequencia, 5, dados);
-                tam = encheBuffer(bufferSend, &messageSend, &tam129, erros, 0);
+                tam = encheBuffer(bufferSend, &messageSend, &tam129, erros, 1);
                 enviaMensagem(socket, bufferSend, sequencia, tam);
                 errorM--;
                 //enterToContinue();
