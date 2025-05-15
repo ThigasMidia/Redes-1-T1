@@ -14,10 +14,10 @@ int main() {
     seq = malloc(1);
     *seq = 0;
 
-    //enviaACK(socket, seq);
-    //recebeArquivo(socket, buffer, "xereca.mp4", seq);
+    enviaACK(socket, seq);
+    recebeArquivo(socket, buffer, "xereca.jpg", seq);
     printf("FOI!!!\n");
-    recv(socket, buffer, MAX_BUFFER, 0); 
+    /*recv(socket, buffer, MAX_BUFFER, 0); 
     for(int i = 0; i < 20; i++)
         printf("%d ", buffer[i]);
     printf("\n");
@@ -34,7 +34,7 @@ int main() {
     printf("PRINT QUE IMPORTA!! %d\n", mensagem.tamanho);
     for(int i = 0; i < mensagem.tamanho; i++)
         printf("%d ", mensagem.dados[i]);
-    printf("\n");
+    printf("\n");*/
     close(socket);
     free(seq);
     free(buffer);

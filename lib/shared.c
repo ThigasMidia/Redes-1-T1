@@ -67,7 +67,7 @@ int checksum(unsigned char *buffer) {
 }
 
 //TRANSFORMA UMA MENSAGEM (TAMANHO, SEQUENCIA, TIPO E DADOS) EM UM BUFFER PARA ENVIO NA REDE
-int encheBuffer(unsigned char *buffer, pacote_t *mensagem) {
+int encheBuffer(unsigned char *buffer, pacote_t *mensagem, int *tam129, unsigned char *erros, int preciso) {
     
     //COLOCA O MARCADOR DE INICIO
     buffer[0] = MARCADOR_INI;
@@ -79,6 +79,8 @@ int encheBuffer(unsigned char *buffer, pacote_t *mensagem) {
     //COPIA TODOS OS DADOS A PARTIR DA POSICAO 5 DO BUFFER
     memcpy(&buffer[4], mensagem->dados, mensagem->tamanho); 
     
+    if(mensagem->tipo >= 4 && mensagem->tipo <= 8)
+        (*tam129) = corrige129(buffer, erros, preciso);
     //CHECKSUM ARMAZENADO NA POSICAO 4 DO BUFFER
     buffer[3] = checksum(buffer);
     int tam = mensagem->tamanho + 4;
@@ -103,7 +105,6 @@ void recebeMensagem(unsigned char *buffer, pacote_t *mensagem) {
      
     //COPIA PARA O CAMPO DE DADOS DA MENSAGEM O QUE ESTA ARMAZENADO NO BUFFER
     memcpy(mensagem->dados, comeco, mensagem->tamanho);
-
 }
 
 //CHECA: SE NAO É MENSAGEM, RETORNA 0. SE A MENSAGEM ESTA CORRETA, RETORNA 1. SE CHECKSUM ERRADO, RETORNA -1
@@ -117,8 +118,7 @@ int checaMensagem(unsigned char *buffer) {
     return 0;
 }
 
-void enviaMensagem(int socket, unsigned char *buffer, pacote_t *mensagem, unsigned char *sequencia) {
-    int tam = encheBuffer(buffer, mensagem);
+void enviaMensagem(int socket, unsigned char *buffer, unsigned char *sequencia, int tam) {
     if(send(socket, buffer, tam, 0) < 0)
         perror("ERRO AO ENVIAR MENSAGEM");
     incrementaSequencia(sequencia);
@@ -129,7 +129,8 @@ void enviaACK(int socket, unsigned char *sequencia) {
     unsigned char *buffer;
     buffer = malloc(MAX_BUFFER);
     criaMensagem(&mensagem, 0, sequencia, 0, NULL);
-    enviaMensagem(socket, buffer, &mensagem, sequencia);
+    int tam = encheBuffer(buffer, &mensagem, NULL, NULL, 0);
+    enviaMensagem(socket, buffer, sequencia, tam);
     free(buffer);
 }
 
@@ -138,8 +139,35 @@ void enviaNACK(int socket, unsigned char *sequencia) {
     unsigned char *buffer;
     buffer = malloc(MAX_BUFFER);
     criaMensagem(&mensagem, 0, sequencia, 1, NULL);
-    enviaMensagem(socket, buffer, &mensagem, sequencia);
+    int tam = encheBuffer(buffer, &mensagem, NULL, NULL, 0);
+    enviaMensagem(socket, buffer, sequencia, tam);
     free(buffer);
+}
+
+int corrige129(unsigned char *buffer, unsigned char *ret, int preciso) {
+    int retIt = 0;
+    if(preciso) {
+        int i, tam = buffer[1] >> 1;
+        for(i = 4; i < tam+3; i++)
+            if((buffer[i] == 129 || buffer[i] == 136) && buffer[i+1] == 0) {
+                ret[retIt] = buffer[i+1];
+                retIt++;
+                buffer[i+1] = 255;
+            }
+    }
+    return retIt;
+}
+
+void restaura129(unsigned char *buffer, unsigned char *error129, int preciso) {
+    int tam = buffer[1] >> 1, errorIt = 0;
+    if(preciso) {
+        for(int i = 4; i < tam+3; i++) {
+            if((buffer[i] == 129 || buffer[i] == 136) && buffer[i+1] == 255) {
+                buffer[i+1] = 0;//error129[errorIt];
+                //errorIt++;
+            }
+        }
+    }
 }
 
 int depoisDe(unsigned char sequencia1, unsigned char sequencia2) {

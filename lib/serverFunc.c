@@ -6,21 +6,39 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
         perror("ERRO AO CRIAR ARQUIVO");
         exit(1);
     }
-    unsigned char liberado = 1, terminado = 0, sequenciaAnt = 126, sequenciaAtu = 0;
-    int bytes = 0, ret;
+
+    unsigned char liberado = 1, terminado = 0, errorM = 0, sequenciaAnt = 126, sequenciaAtu = 0;
+    int bytes = 0, ret, tam, tam129;
     pacote_t messageSend, messageReceive;
-    unsigned char *bufferReceive, *dados;
+    unsigned char *bufferReceive, *dados, *erros;
     bufferReceive = malloc(MAX_BUFFER);
     dados = malloc(MAX_DADOS);
+    erros = malloc(MAX_DADOS);
     messageSend.tipo = 0;
     int cont = 0;
+    tam129 = 256;
+
     while(!terminado) {
         cont++;
-        printf("TIPO/LIBERADO/CONT   %d/%d/%d\n", messageSend.tipo, liberado, cont);
+        //printf("TIPO/LIBERADO/CONT   %d/%d/%d\n", messageSend.tipo, liberado, cont);
         if(liberado) {
-            if((bytes = fread(dados, 1, MAX_DADOS, arquivo)) > 0) {
+            if(errorM) {
                 criaMensagem(&messageSend, bytes, sequencia, 5, dados);
-                enviaMensagem(socket, bufferSend, &messageSend, sequencia);
+                tam = encheBuffer(bufferSend, &messageSend, &tam129, erros, 0);
+                enviaMensagem(socket, bufferSend, sequencia, tam);
+                errorM--;
+                //enterToContinue();
+            }
+
+            else if((bytes = fread(dados, 1, MAX_DADOS, arquivo)) > 0) {
+                criaMensagem(&messageSend, bytes, sequencia, 5, dados);
+                tam = encheBuffer(bufferSend, &messageSend, &tam129, erros, 1);
+                if(tam129) { 
+                    criaMensagem(&messageSend, 0, sequencia, 3, NULL);
+                    tam = encheBuffer(bufferSend, &messageSend, &tam129, erros, 0);
+                    errorM++;
+                }
+                enviaMensagem(socket, bufferSend, sequencia, tam);
                 liberado--;
             }
             else { 
@@ -33,21 +51,18 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
             if(ret == 1) {
                 recebeMensagem(bufferReceive, &messageReceive);
                 sequenciaAtu = messageReceive.sequencia;
-                printf("ACEITOU!!!!!!!!!!!!!!!!!!!!!!!\n");
+                //printf("ACEITOU!!!!!!!!!!!!!!!!!!!!!!!\n");
                 if(sequenciaAnt == 126)
                     sequenciaAnt = (sequenciaAtu + 31) % 32;
-                if(depoisDe(sequenciaAtu, sequenciaAnt)) {
+                if(depoisDe(sequenciaAtu, sequenciaAnt) && sequenciaAnt != sequenciaAtu) {
                     if(!messageReceive.tipo) {
                         liberado++;
+                        tam129 = 256;
                     }
                     else if(messageReceive.tipo == 1) {
-                        decrementaSequencia(sequencia);
-                        for(int i = 0; i < MAX_BUFFER; i++) {
-                            printf("%d ", bufferSend[i]);
-                        }
-                        printf("\n");
-                        //criaMensagem(&messageSend, bytes, sequencia, 5, dados);
-                        enviaMensagem(socket, bufferSend, &messageSend, sequencia);
+                        criaMensagem(&messageSend, bytes, sequencia, 5, dados);
+                        tam = encheBuffer(bufferSend, &messageSend, &tam129, erros, 0);
+                        enviaMensagem(socket, bufferSend, sequencia, tam);
                     }
                 }
             }
@@ -78,6 +93,14 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
     }
     free(dados);
     free(bufferReceive);
+    free(erros);
+}
+
+void enterToContinue() {
+    char enter[11];
+    printf("ENTER\n");
+    scanf("%[^\n]", enter);
+    getchar();
 }
 
 //
@@ -86,7 +109,8 @@ void enviaEOF(int socket, unsigned char *sequencia) {
     unsigned char *buffer;
     buffer = malloc(MAX_BUFFER);
     criaMensagem(&mensagem, 0, sequencia, 9, NULL);
-    enviaMensagem(socket, buffer, &mensagem, sequencia);
+    int tam = encheBuffer(buffer, &mensagem, NULL, NULL, 0);
+    enviaMensagem(socket, buffer, sequencia, tam);
     free(buffer);
 }
 
