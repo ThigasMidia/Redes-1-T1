@@ -67,7 +67,7 @@ int checksum(unsigned char *buffer) {
 }
 
 //TRANSFORMA UMA MENSAGEM (TAMANHO, SEQUENCIA, TIPO E DADOS) EM UM BUFFER PARA ENVIO NA REDE
-int encheBuffer(unsigned char *buffer, pacote_t *mensagem, int *tam129, unsigned char *erros, int preciso) {
+int encheBuffer(unsigned char *buffer, pacote_t *mensagem, int *tam129, int preciso) {
     
     //COLOCA O MARCADOR DE INICIO
     buffer[0] = MARCADOR_INI;
@@ -80,7 +80,7 @@ int encheBuffer(unsigned char *buffer, pacote_t *mensagem, int *tam129, unsigned
     memcpy(&buffer[4], mensagem->dados, mensagem->tamanho); 
     
     if(mensagem->tipo >= 4 && mensagem->tipo <= 8)
-        (*tam129) = corrige129(buffer, erros, preciso);
+        (*tam129) = corrige129(buffer, preciso);
     //CHECKSUM ARMAZENADO NA POSICAO 4 DO BUFFER
     buffer[3] = checksum(buffer);
     int tam = mensagem->tamanho + 4;
@@ -118,67 +118,88 @@ int checaMensagem(unsigned char *buffer) {
     return 0;
 }
 
+//FUNCAO DE ENVIO DE MENSAGEM GENERICA. MEXE NA SEQUENCIA
 void enviaMensagem(int socket, unsigned char *buffer, unsigned char *sequencia, int tam) {
     if(send(socket, buffer, tam, 0) < 0)
         perror("ERRO AO ENVIAR MENSAGEM");
     incrementaSequencia(sequencia);
 }
 
+//FUNCAO DE ENVIO DE ACKS PARA FACILITAR
 void enviaACK(int socket, unsigned char *sequencia) {
     pacote_t mensagem;
     unsigned char *buffer;
     buffer = malloc(MAX_BUFFER);
     criaMensagem(&mensagem, 0, sequencia, 0, NULL);
-    int tam = encheBuffer(buffer, &mensagem, NULL, NULL, 0);
+    int tam = encheBuffer(buffer, &mensagem, NULL, 0);
     enviaMensagem(socket, buffer, sequencia, tam);
     free(buffer);
 }
 
+//FUNCAO DE ENVIO DE NACKS PARA FACILITAR
 void enviaNACK(int socket, unsigned char *sequencia) {
     pacote_t mensagem;
     unsigned char *buffer;
     buffer = malloc(MAX_BUFFER);
     criaMensagem(&mensagem, 0, sequencia, 1, NULL);
-    int tam = encheBuffer(buffer, &mensagem, NULL, NULL, 0);
+    int tam = encheBuffer(buffer, &mensagem, NULL, 0);
     enviaMensagem(socket, buffer, sequencia, tam);
     free(buffer);
 }
 
-int corrige129(unsigned char *buffer, unsigned char *ret, int preciso) {
+//CORRIGE PADROES DE 129 E 136 NAS MENSAGENS
+int corrige129(unsigned char *buffer, int preciso) {
     int retIt = 0;
+    //SE EH NECESSARIO 
     if(preciso) {
         int i, tam = buffer[1] >> 1;
-        for(i = 4; i < tam+3; i++)
+        //CHECA OS DADOS
+        for(i = 4; i < tam+3; i++) {
+            //SE A PROXIMA EH 0, TROCA POR 255
             if((buffer[i] == 129 || buffer[i] == 136) && buffer[i+1] == 0) {
-                ret[retIt] = buffer[i+1];
                 retIt++;
                 buffer[i+1] = 255;
             }
+            //SE EH 136 E O PROXIMA EH 168, TROCA POR 254
+            else if(buffer[i] == 136 && buffer[i+1] == 168) {
+                buffer[i+1] = 254;
+                retIt++;
+            }
+        }
     }
     return retIt;
 }
 
-void restaura129(unsigned char *buffer, unsigned char *error129, int preciso) {
+//RESTAURA A MENSAGEM PARA ANTES DA CORRECAO DE 129 E 136
+void restaura129(unsigned char *buffer, int preciso) {
     int tam = buffer[1] >> 1, errorIt = 0;
+    //SE EH NECESSARIO
     if(preciso) {
         for(int i = 4; i < tam+3; i++) {
+            //TROCA 255 PARA 0
             if((buffer[i] == 129 || buffer[i] == 136) && buffer[i+1] == 255) {
-                buffer[i+1] = 0;//error129[errorIt];
-                //errorIt++;
+                buffer[i+1] = 0;
             }
+            //TROCA 254 PARA 168
+            else if(buffer[i] == 136 && buffer[i+1] == 254)
+                buffer[i+1] = 168;
         }
     }
 }
 
+
+//CHECA ORDEM DA SEQUENCIA
 int depoisDe(unsigned char sequencia1, unsigned char sequencia2) {
 
     return (sequencia1 - sequencia2 + 32) % 32 < 16;
 }
 
+//AUMENTA SEQUENCIA
 void incrementaSequencia(unsigned char *sequencia) {
     (*sequencia) = ((*sequencia) + 1) % 32;
 }
 
+//DIMINUI SEQUENCIA
 void decrementaSequencia(unsigned char *sequencia) {
     (*sequencia) = ((*sequencia) + 31) % 32;
 }
