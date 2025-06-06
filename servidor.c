@@ -36,7 +36,7 @@ int main() {
         printf("%d ", mensagem.dados[i]);
     printf("\n");
     enviaMensagem(socket, buffer, &mensagem, seq);*/
-    enviaArquivo(socket, buffer, "sorrizoRonaldo.mp4", seq);
+    enviaArquivo(socket, buffer, "enviados/grande.jpg", seq);
     close(socket);
     free(seq);
     free(buffer);

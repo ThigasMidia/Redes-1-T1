@@ -67,7 +67,7 @@ int checksum(unsigned char *buffer) {
 }
 
 //TRANSFORMA UMA MENSAGEM (TAMANHO, SEQUENCIA, TIPO E DADOS) EM UM BUFFER PARA ENVIO NA REDE
-int encheBuffer(unsigned char *buffer, pacote_t *mensagem, int *tam129, int preciso) {
+int encheBuffer(unsigned char *buffer, pacote_t *mensagem, int *tam129, int preciso, unsigned char *corrections) {
     
     //COLOCA O MARCADOR DE INICIO
     buffer[0] = MARCADOR_INI;
@@ -80,7 +80,7 @@ int encheBuffer(unsigned char *buffer, pacote_t *mensagem, int *tam129, int prec
     memcpy(&buffer[4], mensagem->dados, mensagem->tamanho); 
     
     if(mensagem->tipo >= 4 && mensagem->tipo <= 8)
-        (*tam129) = corrige129(buffer, preciso);
+        (*tam129) = corrige129(buffer, preciso, corrections);
     //CHECKSUM ARMAZENADO NA POSICAO 4 DO BUFFER
     buffer[3] = checksum(buffer);
     int tam = mensagem->tamanho + 4;
@@ -131,7 +131,7 @@ void enviaACK(int socket, unsigned char *sequencia) {
     unsigned char *buffer;
     buffer = malloc(MAX_BUFFER);
     criaMensagem(&mensagem, 0, sequencia, 0, NULL);
-    int tam = encheBuffer(buffer, &mensagem, NULL, 0);
+    int tam = encheBuffer(buffer, &mensagem, NULL, 0, NULL);
     enviaMensagem(socket, buffer, sequencia, tam);
     free(buffer);
 }
@@ -142,13 +142,13 @@ void enviaNACK(int socket, unsigned char *sequencia) {
     unsigned char *buffer;
     buffer = malloc(MAX_BUFFER);
     criaMensagem(&mensagem, 0, sequencia, 1, NULL);
-    int tam = encheBuffer(buffer, &mensagem, NULL, 0);
+    int tam = encheBuffer(buffer, &mensagem, NULL, 0, NULL);
     enviaMensagem(socket, buffer, sequencia, tam);
     free(buffer);
 }
 
 //CORRIGE PADROES DE 129 E 136 NAS MENSAGENS
-int corrige129(unsigned char *buffer, int preciso) {
+int corrige129(unsigned char *buffer, int preciso, unsigned char *corrections) {
     int retIt = 0;
     //SE EH NECESSARIO 
     if(preciso) {
@@ -157,11 +157,13 @@ int corrige129(unsigned char *buffer, int preciso) {
         for(i = 4; i < tam+3; i++) {
             //SE A PROXIMA EH 0, TROCA POR 255
             if((buffer[i] == 129 || buffer[i] == 136) && buffer[i+1] == 0) {
+                corrections[retIt] = i;
                 retIt++;
                 buffer[i+1] = 255;
             }
             //SE EH 136 E O PROXIMA EH 168, TROCA POR 254
             else if(buffer[i] == 136 && buffer[i+1] == 168) {
+                corrections[retIt] = i;
                 buffer[i+1] = 254;
                 retIt++;
             }
@@ -171,18 +173,21 @@ int corrige129(unsigned char *buffer, int preciso) {
 }
 
 //RESTAURA A MENSAGEM PARA ANTES DA CORRECAO DE 129 E 136
-void restaura129(unsigned char *buffer, int preciso) {
+void restaura129(unsigned char *buffer, int preciso, unsigned char *corrections) {
     int tam = buffer[1] >> 1, errorIt = 0;
     //SE EH NECESSARIO
     if(preciso) {
         for(int i = 4; i < tam+3; i++) {
             //TROCA 255 PARA 0
-            if((buffer[i] == 129 || buffer[i] == 136) && buffer[i+1] == 255) {
+            if((buffer[i] == 129 || buffer[i] == 136) && buffer[i+1] == 255 && corrections[errorIt] == i) {
                 buffer[i+1] = 0;
+                errorIt++;
             }
             //TROCA 254 PARA 168
-            else if(buffer[i] == 136 && buffer[i+1] == 254)
+            else if(buffer[i] == 136 && buffer[i+1] == 254 && corrections[errorIt] == i) {
                 buffer[i+1] = 168;
+                errorIt++;
+            }
         }
     }
 }
