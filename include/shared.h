@@ -36,7 +36,7 @@ void criaMensagem(pacote_t *mensagem, unsigned char tamanho, unsigned char *sequ
 int checksum(unsigned char *buffer);
 
 //TRANSFORMA UMA STRUCT PACOTE_T EM UM BUFFER PARA ENVIO
-int encheBuffer(unsigned char *buffer, pacote_t *mensagem, int *tam129, int preciso);
+int encheBuffer(unsigned char *buffer, pacote_t *mensagem, int *tam129, int preciso, unsigned char *corrections);
 
 //TRANSFORMA UM BUFFER RECEBIDO EM UMA STRUCT PACOTE_T
 void recebeMensagem(unsigned char *buffer, pacote_t *mensagem);
@@ -54,10 +54,10 @@ void enviaACK(int socket, unsigned char *sequencia);
 void enviaNACK(int socket, unsigned char *sequencia);
 
 //
-int corrige129(unsigned char *buffer, int preciso);
+int corrige129(unsigned char *buffer, int preciso, unsigned char *corrections);
 
 //
-void restaura129(unsigned char *buffer, int preciso);
+void restaura129(unsigned char *buffer, int preciso, unsigned char *corrections);
 
 //RETORNA 1 SE SEQUENCIA1 VEM DEPOIS DE SEQUENCIA2, RETORNA 0 CASO CONTRARIO
 int depoisDe(unsigned char sequencia1, unsigned char sequencia2);

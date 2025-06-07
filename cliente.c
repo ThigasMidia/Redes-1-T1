@@ -15,7 +15,7 @@ int main() {
     *seq = 0;
 
     enviaACK(socket, seq);
-    recebeArquivo(socket, buffer, "xereca.mp4", seq);
+    recebeArquivo(socket, buffer, "enviados/copiaImg.jpg", seq);
     printf("FOI!!!\n");
     /*recv(socket, buffer, MAX_BUFFER, 0); 
     for(int i = 0; i < 20; i++)
