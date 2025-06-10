@@ -1,5 +1,26 @@
 #include "../include/serverFunc.h"
 
+void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *sequencia, unsigned char *buffer) {
+    int tipo = 0;
+    pacote_t mensagem;
+    switch(nomearquivo[3]) {
+        case "t":
+            tipo = 6;
+            break;
+        case "j":
+            tipo = 8;
+            break;
+        case "m":
+            tipo = 7;
+            break;
+        default:
+            break;
+    }
+    criaMensagem(&mensagem, 5, sequencia, tipo, nomearquivo);
+    int tam = encheBuffer(buffer, &mensagem, NULL, 0,  NULL);
+    enviaMensagem(socket, buffer, sequencia, tam);
+}
+
 //ENVIA ARQUIVO GENERICO 
 void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned char *sequencia) {
 
@@ -129,6 +150,28 @@ void enviaEOF(int socket, unsigned char *sequencia) {
     enviaMensagem(socket, buffer, sequencia, tam);
     free(buffer);
 }
+
+//INTERPRETA A DIRECAO ENVIADA PELO CLIENTE E ENVIA MENSAGEM CORRESPONDENTE
+void interpretaDirecao(pacote_t direcao, unsigned char *sequencia) {
+    switch(direcao.tipo) {
+        case 10:
+
+            break;
+        case 11:
+
+            break;
+        case 12:
+
+            break;
+        case 13:
+
+            break;
+        default:
+            break;
+    }
+}
+
+
 
 //ALEATORIZA UMA POSICAO
 tesouro aleatorizaTesouro() {

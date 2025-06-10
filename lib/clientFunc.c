@@ -1,5 +1,10 @@
 #include "../include/clientFunc.h"
 
+void encontreiArquivo(int socket, unsigned char *sequencia) {
+    enviaACK(socket, sequencia);
+    
+}
+
 //RECEBE ARQUIVO GENERICO
 void recebeArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned char *sequencia) {
 

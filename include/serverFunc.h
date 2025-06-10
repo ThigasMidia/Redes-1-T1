@@ -9,6 +9,9 @@ typedef struct tesouro {
     unsigned char y;
 } tesouro;
 
+//TRATA QUANDO O CLIENTE ENCONTROU O ARQUIVO
+void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *sequencia, unsigned char *buffer);
+
 //ENVIA ARQUIVO GENERICO
 void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned char *sequencia);
 
