@@ -1,12 +1,7 @@
 #include "../include/clientFunc.h"
 
-void encontreiArquivo(int socket, unsigned char *sequencia) {
-    enviaACK(socket, sequencia);
-    
-}
-
 //RECEBE ARQUIVO GENERICO
-void recebeArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned char *sequencia) {
+void recebeArquivo(int socket, char *nome, unsigned char *sequencia) {
 
     //ABRE ARQUIVO PARA ESCRITA EM BINARIO
     FILE *arquivo = fopen(nome, "wb");
@@ -90,11 +85,20 @@ void recebeArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned c
     free(corrections);
 }
 
+void encontreiArquivo(int socket, unsigned char *sequencia) {
+    enviaACK(socket, sequencia);
+    /*
+     *
+     * RECEBE TAMANHO DE ARQUIVO
+     *
+     */
+    enviaACK(socket, sequencia);
+    recebeArquivo(socket, /*NOME DO ARQUIVO????*/, sequencia);
+}
+
 //FUNCAO PARA ENVIO DE DIRECOES
-void enviaDirecao(int socket, unsigned char direcao, unsigned char *sequencia) {
+void enviaDirecao(int socket, unsigned char direcao, unsigned char *sequencia, unsigned char *bufferSend) {
     pacote_t mensagem;
-    unsigned char *buffer;
-    buffer = malloc(MAX_BUFFER);
     //CRIA MENSAGEM DE DIRECAO
     switch(direcao) {
         case 10:
@@ -113,7 +117,7 @@ void enviaDirecao(int socket, unsigned char direcao, unsigned char *sequencia) {
             break;
     }
     //ENVIA
-    int tam = encheBuffer(buffer, &mensagem, NULL, 0, NULL);
-    enviaMensagem(socket, buffer, sequencia, tam);
-    free(buffer);
+    int tam = encheBuffer(bufferSend, &mensagem, NULL, 0, NULL);
+    enviaMensagem(socket, bufferSend, sequencia, tam);
+    free(bufferSend);
 }

@@ -25,6 +25,20 @@ typedef struct pacote_t {
     unsigned char dados[MAX_DADOS];
 } pacote_t;
 
+typedef struct {
+
+    int x;
+    int y;
+
+} Player;
+
+typedef struct {
+
+   Player p;
+   char grid[8][8]; 
+
+} Tabuleiro;
+
 //FUNCAO DISPONIBILIZADA PELO TODT
 int cria_raw_socket(char* nome_interface_rede);
 

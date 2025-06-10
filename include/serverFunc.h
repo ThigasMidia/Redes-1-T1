@@ -7,6 +7,7 @@
 typedef struct tesouro {
     unsigned char x;
     unsigned char y;
+    unsigned char *arquivo;
 } tesouro;
 
 //TRATA QUANDO O CLIENTE ENCONTROU O ARQUIVO

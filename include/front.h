@@ -12,19 +12,7 @@
 #define U       'w'
 #define D       's'
 
-typedef struct {
-
-    int x;
-    int y;
-
-} Player;
-
-typedef struct {
-
-   Player p;
-   char grid[8][8]; 
-
-} Tabuleiro;
+#include "shared.h"
 
 // Preenche tabuleiro com VAZIO e posisciona DOGUI (player) em (0,0)
 void iniciaTabuleiro (Tabuleiro* t);

@@ -5,7 +5,7 @@
 int main() {
 
     //FUNCIONOU!!!!!!!
-    int socket = cria_raw_socket("veth1");
+    //int socket = cria_raw_socket("veth1");
     unsigned char *buffer, *dados;
     buffer = malloc(MAX_BUFFER);
     dados = malloc(MAX_BUFFER);

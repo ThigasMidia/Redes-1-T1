@@ -41,6 +41,6 @@ $(OBJ)/shared.o: $(LIB)/shared.c $(INCLUDE)/shared.h
 
 clean:
 	rm -rf $(OBJ)
-	
+
 purge: clean
 	rm -f servidor cliente 

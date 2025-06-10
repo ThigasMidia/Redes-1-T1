@@ -1,26 +1,5 @@
 #include "../include/serverFunc.h"
 
-void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *sequencia, unsigned char *buffer) {
-    int tipo = 0;
-    pacote_t mensagem;
-    switch(nomearquivo[3]) {
-        case "t":
-            tipo = 6;
-            break;
-        case "j":
-            tipo = 8;
-            break;
-        case "m":
-            tipo = 7;
-            break;
-        default:
-            break;
-    }
-    criaMensagem(&mensagem, 5, sequencia, tipo, nomearquivo);
-    int tam = encheBuffer(buffer, &mensagem, NULL, 0,  NULL);
-    enviaMensagem(socket, buffer, sequencia, tam);
-}
-
 //ENVIA ARQUIVO GENERICO 
 void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned char *sequencia) {
 
@@ -152,26 +131,94 @@ void enviaEOF(int socket, unsigned char *sequencia) {
 }
 
 //INTERPRETA A DIRECAO ENVIADA PELO CLIENTE E ENVIA MENSAGEM CORRESPONDENTE
-void interpretaDirecao(pacote_t direcao, unsigned char *sequencia) {
+void interpretaDirecao(int socket, pacote_t direcao, unsigned char *sequencia, Player *p, Tabuleiro *t, tesouro *tes, unsigned char *bufferSend) {
+    int msg = 0;
     switch(direcao.tipo) {
         case 10:
-
+            if(p->x != 7) {
+                (p->x)++;
+                msg = 2;
+            }
             break;
         case 11:
-
+            if(p->y != 7) {
+                (p->y)++;
+                msg = 2;
+            }
             break;
         case 12:
-
+            if(p->y) {
+                (p->y)--;
+                msg = 2;
+            }
             break;
         case 13:
-
+            if(p->x) {
+                (p->x)--;
+                msg = 2;
+            }
             break;
         default:
             break;
     }
+
+    if(msg) { 
+        if(checaSeEncontrou(p, tes) == 1) {
+        //LOGICA DE TER ENCONTRADO UM TESOURO
+            encontrouArquivo(socket, tes[]->arquivo, sequencia, bufferSend);
+            /*
+             *
+             * ENVIA TAMANHO DE ARQUIVO
+             *
+             */
+            recv(socket, bufferSend, MAX_BUFFER, 0);
+            enviaArquivo(socket, bufferSend, tes[]->arquivo, sequencia);
+        }
+    }
+    
+    else { 
+        pacote_t envio;
+        criaMensagem(&envio, 0, sequencia, msg, NULL);
+        int tam = encheBuffer(bufferSend, &envio, NULL, 0 NULL);
+        enviaMensagem(socket, bufferSend, sequencia, tam);
+    }
 }
 
+void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *sequencia, unsigned char *buffer) {
+    int tipo;
+    pacote_t mensagem;
+    if(nomearquivo[3] == "t")
+        tipo = 6;
+    else if(nomearquivo[3] == "j")
+        tipo = 8;
+    else
+        tipo = 7;
 
+    criaMensagem(&mensagem, 5, sequencia, tipo, nomearquivo);
+    int tam = encheBuffer(buffer, &mensagem, NULL, 0,  NULL);
+    enviaMensagem(socket, buffer, sequencia, tam);
+    while(tam) {
+        recv(socket, buffer, MAX_BUFFER, 0);
+        ret = checaMensagem(buffer);
+        if(ret == 1) 
+            tam = 0;
+        
+        else if(ret == -1) 
+           enviaNACK(socket, sequencia);
+    }
+}
+
+//CHECA SE PLAYER ESTA EM UM TESOURO
+int checaSeEncontrou(Player *p, tesouro *t) {
+   int achou = 0, cont = 0;
+   while(!achou && cont < 8) {
+        if(p->y == t[cont].y && p->x == t[cont].x)
+            achou = cont+1;
+        cont++;
+   }
+
+   return achou;
+}
 
 //ALEATORIZA UMA POSICAO
 tesouro aleatorizaTesouro() {
