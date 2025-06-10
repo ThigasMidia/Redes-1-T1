@@ -162,19 +162,19 @@ void interpretaDirecao(int socket, pacote_t direcao, unsigned char *sequencia, P
             break;
     }
 
-    if(msg) { 
-        if(checaSeEncontrou(p, tes) == 1) {
-        //LOGICA DE TER ENCONTRADO UM TESOURO
-            encontrouArquivo(socket, tes[]->arquivo, sequencia, bufferSend);
-            /*
-             *
-             * ENVIA TAMANHO DE ARQUIVO
-             *
-             */
-            recv(socket, bufferSend, MAX_BUFFER, 0);
-            enviaArquivo(socket, bufferSend, tes[]->arquivo, sequencia);
-        }
+    if(checaSeEncontrou(p, tes) == 1) {
+    //LOGICA DE TER ENCONTRADO UM TESOURO
+        encontrouArquivo(socket, tes[]->arquivo, sequencia, bufferSend);
+        /*
+        *
+        * ENVIA TAMANHO DE ARQUIVO
+        *
+        */
+        recv(socket, bufferSend, MAX_BUFFER, 0);
+        enviaArquivo(socket, bufferSend, tes[]->arquivo, sequencia);
+        tes[]->encontrado = 1;
     }
+    
     
     else { 
         pacote_t envio;
@@ -212,7 +212,7 @@ void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *seq
 int checaSeEncontrou(Player *p, tesouro *t) {
    int achou = 0, cont = 0;
    while(!achou && cont < 8) {
-        if(p->y == t[cont].y && p->x == t[cont].x)
+        if(p->y == t[cont].y && p->x == t[cont].x && !t[cont]->encontrado)
             achou = cont+1;
         cont++;
    }
@@ -239,6 +239,7 @@ int comparaTesouros(tesouro t1, tesouro t2) {
 void criaTesouros(tesouro *t) {
     tesouro tes;
     int tam = 0, comp, i;
+    tes.encontrado = 0;
 
     while(tam < 8) {
         comp = 1;
