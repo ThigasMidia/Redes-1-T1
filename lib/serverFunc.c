@@ -171,6 +171,8 @@ void interpretaDirecao(pacote_t direcao, unsigned char *sequencia) {
     }
 }
 
+
+
 //ALEATORIZA UMA POSICAO
 tesouro aleatorizaTesouro() {
     tesouro t;
