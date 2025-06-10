@@ -1,5 +1,10 @@
 #include "../include/clientFunc.h"
 
+void encontreiArquivo(int socket, unsigned char *sequencia) {
+    enviaACK(socket, sequencia);
+    
+}
+
 //RECEBE ARQUIVO GENERICO
 void recebeArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned char *sequencia) {
 
@@ -10,13 +15,13 @@ void recebeArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned c
         exit(1);
     }
     
-    int ret, tam;
+    int ret;
     unsigned char terminado = 0, liberado = 1, lastAN = 0, sen129 = 0, sequenciaAnt = 126, sequenciaAtu = 0;
-    unsigned char *bufferReceive;
-    pacote_t messageSend, messageReceive;
+    unsigned char *bufferReceive, *corrections;
+    pacote_t messageReceive;
     messageReceive.tipo = 126;
     bufferReceive = malloc(MAX_BUFFER);
-    messageSend.tipo = 0;
+    corrections = calloc(MAX_DADOS, 1);
 
     //LOOP DE RECEBIMENTO DE ARQUIVO
     while(!terminado) {
@@ -27,7 +32,7 @@ void recebeArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned c
             //SE CHECKSUM ESTA CORRETO
             if(ret == 1) {
                 //SE HA NECESSIDADE, RESTAURA OS PADROES PROBLEMATICOS
-                restaura129(bufferReceive, sen129);
+                restaura129(bufferReceive, sen129, corrections);
                 recebeMensagem(bufferReceive, &messageReceive);
                 sequenciaAtu = messageReceive.sequencia;
                 if(sequenciaAnt == 126)
@@ -36,9 +41,8 @@ void recebeArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned c
                 //SE A SEQUENCIA ESTA CORRETA
                 if(depoisDe(sequenciaAtu, sequenciaAnt) && sequenciaAnt != sequenciaAtu) {
                     //SE EH DADOS
-                    if(messageReceive.tipo == 5) {
-                        if(sen129) 
-                            sen129--;
+                    if(messageReceive.tipo == 5) { 
+                        sen129 = 0;
                         fwrite(messageReceive.dados, 1, messageReceive.tamanho, arquivo);
                         liberado--;
                     }
@@ -56,8 +60,14 @@ void recebeArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned c
                     }
                     //SE EH TIPO 3, PROXIMA MENSAGEM DE DADOS DEVE SER RESTAURADA
                     else if(messageReceive.tipo == 3) {
-                        sen129++;
+                        sen129 = 1;
                         liberado--;
+                        //printf("%d  ", bufferReceive[4]);
+                        //printf("%d\n", messageReceive.dados[0]);
+                        memcpy(corrections, messageReceive.dados, messageReceive.tamanho);
+                        /*for(int i = 0; i < messageReceive.tamanho; i++)
+                            printf("%d ", messageReceive.dados[i]);
+                        printf("\n")*/
                     }
                 }
                 sequenciaAnt = sequenciaAtu;
@@ -77,6 +87,7 @@ void recebeArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned c
     }
     //LIBERA MEMORIA
     free(bufferReceive);
+    free(corrections);
 }
 
 //FUNCAO PARA ENVIO DE DIRECOES
@@ -102,7 +113,7 @@ void enviaDirecao(int socket, unsigned char direcao, unsigned char *sequencia) {
             break;
     }
     //ENVIA
-    int tam = encheBuffer(buffer, &mensagem, NULL, 0);
+    int tam = encheBuffer(buffer, &mensagem, NULL, 0, NULL);
     enviaMensagem(socket, buffer, sequencia, tam);
     free(buffer);
 }

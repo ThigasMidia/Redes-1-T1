@@ -1,5 +1,26 @@
 #include "../include/serverFunc.h"
 
+void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *sequencia, unsigned char *buffer) {
+    int tipo = 0;
+    pacote_t mensagem;
+    switch(nomearquivo[3]) {
+        case "t":
+            tipo = 6;
+            break;
+        case "j":
+            tipo = 8;
+            break;
+        case "m":
+            tipo = 7;
+            break;
+        default:
+            break;
+    }
+    criaMensagem(&mensagem, 5, sequencia, tipo, nomearquivo);
+    int tam = encheBuffer(buffer, &mensagem, NULL, 0,  NULL);
+    enviaMensagem(socket, buffer, sequencia, tam);
+}
+
 //ENVIA ARQUIVO GENERICO 
 void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned char *sequencia) {
 
@@ -17,12 +38,13 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
     pacote_t messageSend, messageReceive;
 
     //BUFFER DE RECEBIMENTO E DADOS LIDOS
-    unsigned char *bufferReceive, *dados;
+    unsigned char *bufferReceive, *dados, *corrections;
     bufferReceive = malloc(MAX_BUFFER);
     dados = malloc(MAX_DADOS);
+    corrections = calloc(MAX_DADOS, 1);
 
     messageSend.tipo = 0;
-    tam129 = 256;
+    tam129 = 0;
     
     //LOOP DE ENVIO DE ARQUIVO
     while(!terminado) {
@@ -31,20 +53,21 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
             //SE A MENSAGEM ANTERIOR FOI DO TIPO 3 (NECESSIDADE DE CORRIGIR A PROXIMA MENSAGEM)
             if(errorM) {
                 criaMensagem(&messageSend, bytes, sequencia, 5, dados);
-                tam = encheBuffer(bufferSend, &messageSend, &tam129, 1);
+                tam = encheBuffer(bufferSend, &messageSend, &tam129, 1, corrections);
                 enviaMensagem(socket, bufferSend, sequencia, tam);
                 errorM--;
+                liberado--;
             }
             
             //LOOP NORMAL DE LEITURA DE ARQUIVO
             else if((bytes = fread(dados, 1, MAX_DADOS, arquivo)) > 0) {
                 criaMensagem(&messageSend, bytes, sequencia, 5, dados);
-                tam = encheBuffer(bufferSend, &messageSend, &tam129, 1);
+                tam = encheBuffer(bufferSend, &messageSend, &tam129, 1, corrections);
 
                 //SE EXISTE ALGUM PADRAO PROBLEMATICO NA MENSAGEM
-                if(tam129) { 
-                    criaMensagem(&messageSend, 0, sequencia, 3, NULL);
-                    tam = encheBuffer(bufferSend, &messageSend, &tam129, 0);
+                if(tam129) {
+                    criaMensagem(&messageSend, tam129, sequencia, 3, corrections);
+                    tam = encheBuffer(bufferSend, &messageSend, &tam129, 0, corrections);
                     errorM++;
                 }
                 enviaMensagem(socket, bufferSend, sequencia, tam);
@@ -57,7 +80,6 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
         }
         //SE NAO ESTA LIBERADO PARA LER O ARQUIVO
         else {
-
             recv(socket, bufferReceive, MAX_BUFFER, 0);
             ret = checaMensagem(bufferReceive);
             //SE CHECKSUM ESTA CORRETO
@@ -72,12 +94,11 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
                     //SE RECEBEU ACK
                     if(!messageReceive.tipo) {
                         liberado++;
-                        tam129 = 256;
                     }
                     //SE RECEBEU NACK
                     else if(messageReceive.tipo == 1) {
                         criaMensagem(&messageSend, bytes, sequencia, 5, dados);
-                        tam = encheBuffer(bufferSend, &messageSend, &tam129, 0);
+                        tam = encheBuffer(bufferSend, &messageSend, &tam129, 0, corrections);
                         enviaMensagem(socket, bufferSend, sequencia, tam);
                     }
                 }
@@ -116,6 +137,7 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
     //LIBERA MEMORIA
     free(dados);
     free(bufferReceive);
+    free(corrections);
 }
 
 //FUNCAO PARA ENVIO DE EOF
@@ -124,10 +146,32 @@ void enviaEOF(int socket, unsigned char *sequencia) {
     unsigned char *buffer;
     buffer = malloc(MAX_BUFFER);
     criaMensagem(&mensagem, 0, sequencia, 9, NULL);
-    int tam = encheBuffer(buffer, &mensagem, NULL, 0);
+    int tam = encheBuffer(buffer, &mensagem, NULL, 0, NULL);
     enviaMensagem(socket, buffer, sequencia, tam);
     free(buffer);
 }
+
+//INTERPRETA A DIRECAO ENVIADA PELO CLIENTE E ENVIA MENSAGEM CORRESPONDENTE
+void interpretaDirecao(pacote_t direcao, unsigned char *sequencia) {
+    switch(direcao.tipo) {
+        case 10:
+
+            break;
+        case 11:
+
+            break;
+        case 12:
+
+            break;
+        case 13:
+
+            break;
+        default:
+            break;
+    }
+}
+
+
 
 //ALEATORIZA UMA POSICAO
 tesouro aleatorizaTesouro() {

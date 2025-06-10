@@ -39,13 +39,8 @@ int main() {
     for(int i = 0; i < 16; i++)
         printf("%d ", mensagem.dados[i]);
     printf("\n");
-    
     enviaMensagem(socket, buffer, &mensagem, seq);
     */
-    
-    enviaArquivo(socket, buffer, "sorrizoRonaldo.mp4", seq);
-    
-    
     close(socket);
     free(seq);
     free(buffer);

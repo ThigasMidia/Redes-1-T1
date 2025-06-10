@@ -31,7 +31,7 @@ int main() {
     
     /*
     enviaACK(socket, seq);
-    recebeArquivo(socket, buffer, "xereca.mp4", seq);
+    recebeArquivo(socket, buffer, "enviados/copiaImg.jpg", seq);
     printf("FOI!!!\n");
     */
     
