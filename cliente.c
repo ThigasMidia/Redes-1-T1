@@ -1,5 +1,6 @@
 #include "./include/shared.h"
 #include "./include/clientFunc.h"
+#include "./include/front.h"
 
 int main() {
 
@@ -13,10 +14,27 @@ int main() {
     unsigned char *seq;
     seq = malloc(1);
     *seq = 0;
-
+    
+    Tabuleiro t;
+    iniciaTabuleiro(&t);
+    char move;
+        
+    printTabuleiro(&t, DOGUI);
+    
+    t.grid[2][3] = TSORO;
+    // por enquanto, depois agnt muda pra while nn encontrou todos ou sla
+    while (1) {
+        move = getchar();
+        getchar();
+        movePlayer(&t, move);
+    }
+    
+    /*
     enviaACK(socket, seq);
     recebeArquivo(socket, buffer, "enviados/copiaImg.jpg", seq);
     printf("FOI!!!\n");
+    */
+    
     /*recv(socket, buffer, MAX_BUFFER, 0); 
     for(int i = 0; i < 20; i++)
         printf("%d ", buffer[i]);
@@ -34,7 +52,8 @@ int main() {
     printf("PRINT QUE IMPORTA!! %d\n", mensagem.tamanho);
     for(int i = 0; i < mensagem.tamanho; i++)
         printf("%d ", mensagem.dados[i]);
-    printf("\n");*/
+    printf("\n"); */
+    
     close(socket);
     free(seq);
     free(buffer);

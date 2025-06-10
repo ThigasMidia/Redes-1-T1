@@ -11,16 +11,20 @@ int main() {
     unsigned char *seq;
     seq = malloc(1);
     *seq = 0;
+    int ret;
+    
     while(fim) {
         recv(socket, buffer, MAX_BUFFER, 0);
-        int ret = checaMensagem(buffer);
+        ret = checaMensagem(buffer);
         if(ret == 1) {
             recebeMensagem(buffer, &mensagem);
             if(!mensagem.tipo)
                 fim--;
         }
     }
-    /*enviaMensagem(socket, buffer, &mensagem, seq);    
+    
+    /*
+    enviaMensagem(socket, buffer, &mensagem, seq);    
     mensagem.dados[0] = 126;
     mensagem.dados[1] = 126; 
     mensagem.dados[2] = 134; 
@@ -35,8 +39,8 @@ int main() {
     for(int i = 0; i < 16; i++)
         printf("%d ", mensagem.dados[i]);
     printf("\n");
-    enviaMensagem(socket, buffer, &mensagem, seq);*/
-    enviaArquivo(socket, buffer, "enviados/grande.jpg", seq);
+    enviaMensagem(socket, buffer, &mensagem, seq);
+    */
     close(socket);
     free(seq);
     free(buffer);
