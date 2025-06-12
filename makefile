@@ -4,18 +4,17 @@ CFLAGS = -g -Wall
 INCLUDE = ./include
 LIB = ./lib
 OBJ = ./obj
+    
+OBJCLI = $(OBJ)/cliente.o $(OBJ)/clientFunc.o $(OBJ)/front.o $(OBJ)/shared.o
+OBJSER = $(OBJ)/servidor.o $(OBJ)/serverFunc.o $(OBJ)/front.o $(OBJ)/shared.o
 
 all: obj servidor cliente
 
-servidor: $(OBJ)/servidor.o
+servidor: $(OBJSER)
 	$(CC) -o servidor $(OBJSER)
 	
 cliente: $(OBJ)/cliente.o
 	$(CC) -o cliente $(OBJCLI)
-    
-    
-OBJCLI = $(OBJ)/cliente.o $(OBJ)/clientFunc.o $(OBJ)/front.o $(OBJ)/shared.o
-OBJSER = $(OBJ)/servidor.o $(OBJ)/serverFunc.o $(OBJ)/shared.o
 
 obj:
 	mkdir $(OBJ)

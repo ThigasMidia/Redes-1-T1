@@ -5,7 +5,7 @@
 int main() {
 
     //FUNCIONOU!!!!!!!
-    //int socket = cria_raw_socket("veth1");
+    int socket = cria_raw_socket("veth1");
     unsigned char *buffer, *dados;
     buffer = malloc(MAX_BUFFER);
     dados = malloc(MAX_BUFFER);
@@ -20,6 +20,7 @@ int main() {
     char move;
         
     printTabuleiro(&t, DOGUI);
+    enviaACK(socket, seq);
     
     t.grid[2][3] = TSORO;
     // por enquanto, depois agnt muda pra while nn encontrou todos ou sla
@@ -27,33 +28,28 @@ int main() {
         move = getchar();
         getchar();
         movePlayer(&t, move);
+        int direct;
+        if(move == 'w')
+            direct = 11;
+        else if (move == 'a')
+            direct = 13;
+        else if (move == 's')
+            direct = 12;
+        else
+            direct = 10;
+        enviaDirecao(socket, direct, seq, buffer);
+        recv(socket, buffer, MAX_BUFFER, 0);
+        recebeMensagem(buffer, &mensagem);
+        printf("TIPO: %d\n", mensagem.tipo);
+        if(mensagem.tipo == 6 || mensagem.tipo == 7 || mensagem.tipo == 8) {
+            printf("%s\n", mensagem.dados);
+            enviaACK(socket, seq);
+            recebeArquivo(socket, mensagem.dados, seq);
+        }
     }
-    
     /*
-    enviaACK(socket, seq);
-    recebeArquivo(socket, buffer, "enviados/copiaImg.jpg", seq);
     printf("FOI!!!\n");
     */
-    
-    /*recv(socket, buffer, MAX_BUFFER, 0); 
-    for(int i = 0; i < 20; i++)
-        printf("%d ", buffer[i]);
-    printf("\n");
-    recebeMensagem(buffer, &mensagem);
-    printf("PRINT PRELIMINAR\n");
-    for(int i = 0; i < mensagem.tamanho; i++)
-        printf("%d ", mensagem.dados[i]);
-    printf("\n");
-    recv(socket, buffer, MAX_BUFFER, 0);
-    recebeMensagem(buffer, &mensagem);
-    for(int i = 0; i < 20; i++)
-        printf("%d ", buffer[i]);
-    printf("\n");
-    printf("PRINT QUE IMPORTA!! %d\n", mensagem.tamanho);
-    for(int i = 0; i < mensagem.tamanho; i++)
-        printf("%d ", mensagem.dados[i]);
-    printf("\n"); */
-    
     close(socket);
     free(seq);
     free(buffer);

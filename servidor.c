@@ -1,4 +1,5 @@
 #include "./include/shared.h"
+#include "./include/front.h"
 #include "./include/serverFunc.h"
 
 int main() {
@@ -12,6 +13,13 @@ int main() {
     seq = malloc(1);
     *seq = 0;
     int ret;
+    tesouro *tes;
+    tes = malloc(sizeof(tesouro) * 8);
+    criaTesouros(tes);
+    for(int i = 0; i < 8; i++)
+        printf("%s       %d/%d\n", tes[i].arquivo, tes[i].x, tes[i].y);
+    Tabuleiro tabuleiro;
+    iniciaTabuleiro(&tabuleiro);
     
     while(fim) {
         recv(socket, buffer, MAX_BUFFER, 0);
@@ -22,25 +30,17 @@ int main() {
                 fim--;
         }
     }
-    
-    /*
-    enviaMensagem(socket, buffer, &mensagem, seq);    
-    mensagem.dados[0] = 126;
-    mensagem.dados[1] = 126; 
-    mensagem.dados[2] = 134; 
-    mensagem.dados[3] = 163; 
-    for(int i = 4; i < 16; i = i + 4) {
-        printf("%d\n", i);
-        mensagem.dados[i] = 129;
-        mensagem.dados[i+1] = 0;
-        mensagem.dados[i+2] = 0;
-        mensagem.dados[i+3] = 1;
+    while(1) {
+        recv(socket, buffer, MAX_BUFFER, 0);
+        for(int i = 0; i < 5; i++)
+            printf("%d ", buffer[i]);
+        printf("\n");
+        ret = checaMensagem(buffer);
+        if(ret == 1) {
+            recebeMensagem(buffer, &mensagem);
+            interpretaDirecao(socket, mensagem, seq, &tabuleiro, tes, buffer);
+        }
     }
-    for(int i = 0; i < 16; i++)
-        printf("%d ", mensagem.dados[i]);
-    printf("\n");
-    enviaMensagem(socket, buffer, &mensagem, seq);
-    */
     close(socket);
     free(seq);
     free(buffer);

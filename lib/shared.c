@@ -79,7 +79,7 @@ int encheBuffer(unsigned char *buffer, pacote_t *mensagem, int *tam129, int prec
     //COPIA TODOS OS DADOS A PARTIR DA POSICAO 5 DO BUFFER
     memcpy(&buffer[4], mensagem->dados, mensagem->tamanho); 
     
-    if(mensagem->tipo >= 4 && mensagem->tipo <= 8)
+    if(mensagem->tipo == 5)
         (*tam129) = corrige129(buffer, preciso, corrections);
     //CHECKSUM ARMAZENADO NA POSICAO 4 DO BUFFER
     buffer[3] = checksum(buffer);

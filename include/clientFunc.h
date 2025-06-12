@@ -10,6 +10,6 @@ void encontreiArquivo();
 void recebeArquivo(int socket, char *nome, unsigned char *sequencia);
 
 //ENVIA UMA DIRECAO QUE O CLIENTE QUER IR
-void enviaDirecao(int socket, unsigned char direcao, unsigned char *sequencia);
+void enviaDirecao(int socket, unsigned char direcao, unsigned char *sequencia, unsigned char *bufferSend);
 
 #endif

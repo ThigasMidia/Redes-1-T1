@@ -1,4 +1,5 @@
 #include "../include/serverFunc.h"
+#include <dirent.h>
 
 //ENVIA ARQUIVO GENERICO 
 void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned char *sequencia) {
@@ -131,55 +132,51 @@ void enviaEOF(int socket, unsigned char *sequencia) {
 }
 
 //INTERPRETA A DIRECAO ENVIADA PELO CLIENTE E ENVIA MENSAGEM CORRESPONDENTE
-void interpretaDirecao(int socket, pacote_t direcao, unsigned char *sequencia, Player *p, Tabuleiro *t, tesouro *tes, unsigned char *bufferSend) {
+void interpretaDirecao(int socket, pacote_t direcao, unsigned char *sequencia, Tabuleiro *t, tesouro *tes, unsigned char *bufferSend) {
     int msg = 0;
     switch(direcao.tipo) {
         case 10:
-            if(p->x != 7) {
-                (p->x)++;
+            if(t->p.x != 7) {
+                (t->p.x)++;
                 msg = 2;
             }
             break;
         case 11:
-            if(p->y != 7) {
-                (p->y)++;
+            if(t->p.y != 7) {
+                (t->p.y)++;
                 msg = 2;
             }
             break;
         case 12:
-            if(p->y) {
-                (p->y)--;
+            if(t->p.y) {
+                (t->p.y)--;
                 msg = 2;
             }
             break;
         case 13:
-            if(p->x) {
-                (p->x)--;
+            if(t->p.x) {
+                (t->p.x)--;
                 msg = 2;
             }
             break;
         default:
             break;
     }
-
-    if(checaSeEncontrou(p, tes) == 1) {
+    printf("MENSAGEM: %d       %d/%d\n", msg, t->p.x, t->p.y);
+    int posi = checaSeEncontrou(t->p, tes);
+    printf("POSI: %d\n", posi);
+    if(posi != 8) {
     //LOGICA DE TER ENCONTRADO UM TESOURO
-        encontrouArquivo(socket, tes[]->arquivo, sequencia, bufferSend);
-        /*
-        *
-        * ENVIA TAMANHO DE ARQUIVO
-        *
-        */
-        recv(socket, bufferSend, MAX_BUFFER, 0);
-        enviaArquivo(socket, bufferSend, tes[]->arquivo, sequencia);
-        tes[]->encontrado = 1;
+        encontrouArquivo(socket, tes[posi].arquivo, sequencia, bufferSend);
+        //LOGICA DE ENVIO DE TAMANHO//
+        enviaArquivo(socket, bufferSend, (char *)tes[posi].arquivo, sequencia);
     }
     
     
     else { 
         pacote_t envio;
         criaMensagem(&envio, 0, sequencia, msg, NULL);
-        int tam = encheBuffer(bufferSend, &envio, NULL, 0 NULL);
+        int tam = encheBuffer(bufferSend, &envio, NULL, 0 ,NULL);
         enviaMensagem(socket, bufferSend, sequencia, tam);
     }
 }
@@ -187,19 +184,23 @@ void interpretaDirecao(int socket, pacote_t direcao, unsigned char *sequencia, P
 void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *sequencia, unsigned char *buffer) {
     int tipo;
     pacote_t mensagem;
-    if(nomearquivo[3] == "t")
+    unsigned char formato = nomearquivo[3];
+    if(formato == 't')
         tipo = 6;
-    else if(nomearquivo[3] == "j")
+    else if(formato == 'j')
         tipo = 8;
     else
         tipo = 7;
 
-    criaMensagem(&mensagem, 5, sequencia, tipo, nomearquivo);
+    unsigned char *realNomeArquivo, arquivo[256];
+    strncpy(arquivo, nomearquivo + 11, 5);
+    realNomeArquivo = arquivo;
+    criaMensagem(&mensagem, 5, sequencia, tipo, realNomeArquivo);
     int tam = encheBuffer(buffer, &mensagem, NULL, 0,  NULL);
     enviaMensagem(socket, buffer, sequencia, tam);
     while(tam) {
         recv(socket, buffer, MAX_BUFFER, 0);
-        ret = checaMensagem(buffer);
+        int ret = checaMensagem(buffer);
         if(ret == 1) 
             tam = 0;
         
@@ -209,11 +210,15 @@ void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *seq
 }
 
 //CHECA SE PLAYER ESTA EM UM TESOURO
-int checaSeEncontrou(Player *p, tesouro *t) {
-   int achou = 0, cont = 0;
-   while(!achou && cont < 8) {
-        if(p->y == t[cont].y && p->x == t[cont].x && !t[cont]->encontrado)
-            achou = cont+1;
+int checaSeEncontrou(Player p, tesouro *t) {
+   int achou = 8, cont = 0;
+   printf("POSICOES PLAYER: %d/%d\n", p.x, p.y);
+   while(achou == 8 && cont < 8) {
+       printf("POSICOES TESOURO: %d/%d      %d\n", t[cont].x, t[cont].y, t[cont].encontrado);
+        if(p.y == t[cont].y && p.x == t[cont].x && !t[cont].encontrado) {
+            achou = cont;
+            t[cont].encontrado = 1;
+        }
         cont++;
    }
 
@@ -225,6 +230,10 @@ tesouro aleatorizaTesouro() {
     tesouro t;
     t.x = random() % 8;
     t.y = random() % 8;
+    while(t.x == 0 && t.y == t.x) {
+        t.x = random() % 8;
+        t.y = random() % 8;
+    }
     return t;
 }
 
@@ -235,11 +244,27 @@ int comparaTesouros(tesouro t1, tesouro t2) {
     return 0;
 }
 
+
+void leArquivosdeEnvio(char arquivos[8][256]) {
+    DIR *diretorio = opendir("./enviados");
+    struct dirent *arquivo;
+    int tam = 0;
+    while((arquivo = readdir(diretorio)) != NULL && tam < 8) {
+        if(strcmp(arquivo->d_name, ".") != 0 && strcmp(arquivo->d_name, "..") != 0) {
+            strcpy(arquivos[tam], "./enviados/");
+            strcat(arquivos[tam], arquivo->d_name);
+            tam++;
+        }
+    }
+}
+
 //FUNCAO DE CRIACAO DE TODAS AS POSICOES DE TESOUROS
 void criaTesouros(tesouro *t) {
     tesouro tes;
     int tam = 0, comp, i;
-    tes.encontrado = 0;
+
+    char arquivos[8][256];
+    leArquivosdeEnvio(arquivos);
 
     while(tam < 8) {
         comp = 1;
@@ -254,6 +279,9 @@ void criaTesouros(tesouro *t) {
         //COLOCA NO VETOR
         if(comp) {
             t[tam] = tes;
+            t[tam].arquivo = malloc(256);
+            strcpy((char *)t[tam].arquivo, arquivos[tam]);
+            t[tam].encontrado = 0;
             tam++;
         }
     }

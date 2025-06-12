@@ -20,6 +20,15 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
 //ENVIA MENSAGEM TIPO 9
 void enviaEOF(int socket, unsigned char *sequencia);
 
+//
+void interpretaDirecao(int socket, pacote_t direcao, unsigned char *sequencia, Tabuleiro *t, tesouro *tes, unsigned char *bufferSend);
+
+//
+void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *sequencia, unsigned char *buffer);
+
+//CHECA SE PLAYER ESTA EM UM TESOURO
+int checaSeEncontrou(Player p, tesouro *t);
+
 //ALEATORIZA POSICAO DO TESOURO
 tesouro aleatorizaTesouro();
 

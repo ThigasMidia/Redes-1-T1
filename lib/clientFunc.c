@@ -93,7 +93,7 @@ void encontreiArquivo(int socket, unsigned char *sequencia) {
      *
      */
     enviaACK(socket, sequencia);
-    recebeArquivo(socket, /*NOME DO ARQUIVO????*/, sequencia);
+    //recebeArquivo(socket, /*NOME DO ARQUIVO????*/, sequencia);
 }
 
 //FUNCAO PARA ENVIO DE DIRECOES
@@ -119,5 +119,7 @@ void enviaDirecao(int socket, unsigned char direcao, unsigned char *sequencia, u
     //ENVIA
     int tam = encheBuffer(bufferSend, &mensagem, NULL, 0, NULL);
     enviaMensagem(socket, bufferSend, sequencia, tam);
-    free(bufferSend);
+    for(int i = 0; i < 5; i++)
+        printf("%d ", bufferSend[i]);
+    printf("\n");
 }
