@@ -81,6 +81,7 @@ void recebeArquivo(int socket, char *nome, unsigned char *sequencia) {
         }
     }
     //LIBERA MEMORIA
+    fclose(arquivo);
     free(bufferReceive);
     free(corrections);
 }

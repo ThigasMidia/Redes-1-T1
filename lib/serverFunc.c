@@ -113,7 +113,8 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
         else if(ret == -1)
             enviaNACK(socket, sequencia);
     }
-
+    
+    fclose(arquivo);
     //LIBERA MEMORIA
     free(dados);
     free(bufferReceive);

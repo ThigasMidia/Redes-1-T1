@@ -37,14 +37,21 @@ int main() {
             direct = 12;
         else
             direct = 10;
+        int ret = 0;
         enviaDirecao(socket, direct, seq, buffer);
-        recv(socket, buffer, MAX_BUFFER, 0);
-        recebeMensagem(buffer, &mensagem);
-        printf("TIPO: %d\n", mensagem.tipo);
-        if(mensagem.tipo == 6 || mensagem.tipo == 7 || mensagem.tipo == 8) {
-            printf("%s\n", mensagem.dados);
-            enviaACK(socket, seq);
-            recebeArquivo(socket, mensagem.dados, seq);
+        while(ret == 0) {
+            printf("TA EM 0\n");
+            recv(socket, buffer, MAX_BUFFER, 0);
+            ret = checaMensagem(buffer);
+        }
+        if(ret == 1) {
+            recebeMensagem(buffer, &mensagem);
+            printf("TIPO: %d\n", mensagem.tipo);
+            if(mensagem.tipo == 6 || mensagem.tipo == 7 || mensagem.tipo == 8) {
+                printf("%s\n", mensagem.dados);
+                enviaACK(socket, seq);
+                recebeArquivo(socket, mensagem.dados, seq);
+            }
         }
     }
     /*
