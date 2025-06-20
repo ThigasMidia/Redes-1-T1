@@ -25,7 +25,7 @@ int recebeTamanho(int socket, unsigned char *sequencia, unsigned char *buffer, c
 
             if(espacoDisco - tamanho <= 0) {
                 printf("TESOURO ENCONTRADO, MAS NÃO HÁ ESPAÇO EM DISCO SUFICIENTE!!!!!!!\n");
-                criaMensagem(&mensagem, 1, sequencia, 15, "1");
+                criaMensagem(&mensagem, 1, sequencia, 15, (unsigned char *)"1");
                 int tam = encheBuffer(buffer, &mensagem, NULL, 0, NULL);
                 enviaMensagem(socket, buffer, sequencia, tam);
                 return 0;

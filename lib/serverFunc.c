@@ -185,13 +185,13 @@ void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *seq
         tipo = 7;
 
     char arquivo[256];
-    unsigned char *realNomeArquivo;
+    char *realNomeArquivo;
     strncpy(arquivo, "./recebidos/", 12);
     arquivo[12] = '\0';
-    strncat(arquivo, nomearquivo + 10, 5);
+    strncat(arquivo, (char *)nomearquivo + 10, 5);
     realNomeArquivo = arquivo;
 
-    criaMensagem(&mensagem, 17, sequencia, tipo, realNomeArquivo);
+    criaMensagem(&mensagem, 17, sequencia, tipo, (unsigned char *)realNomeArquivo);
     int tam = encheBuffer(buffer, &mensagem, NULL, 0,  NULL);
     enviaMensagem(socket, buffer, sequencia, tam);
     while(tam) {

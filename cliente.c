@@ -9,7 +9,6 @@ int main() {
     unsigned char *buffer;
     buffer = malloc(MAX_BUFFER);
     pacote_t mensagem;
-    int fim = 1;
     unsigned char *seq;
     seq = malloc(1);
     *seq = 0;
@@ -47,7 +46,7 @@ int main() {
             recebeMensagem(buffer, &mensagem);
             if(mensagem.tipo == 6 || mensagem.tipo == 7 || mensagem.tipo == 8) {
                 enviaACK(socket, seq);
-                recebeArquivo(socket, mensagem.dados, seq);
+                recebeArquivo(socket, (char *)mensagem.dados, seq);
                 quantos++;
             }
         }
