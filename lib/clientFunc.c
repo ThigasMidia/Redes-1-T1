@@ -57,12 +57,7 @@ void recebeArquivo(int socket, char *nome, unsigned char *sequencia) {
                     else if(messageReceive.tipo == 3) {
                         sen129 = 1;
                         liberado--;
-                        //printf("%d  ", bufferReceive[4]);
-                        //printf("%d\n", messageReceive.dados[0]);
                         memcpy(corrections, messageReceive.dados, messageReceive.tamanho);
-                        /*for(int i = 0; i < messageReceive.tamanho; i++)
-                            printf("%d ", messageReceive.dados[i]);
-                        printf("\n")*/
                     }
                 }
                 sequenciaAnt = sequenciaAtu;
@@ -120,7 +115,4 @@ void enviaDirecao(int socket, unsigned char direcao, unsigned char *sequencia, u
     //ENVIA
     int tam = encheBuffer(bufferSend, &mensagem, NULL, 0, NULL);
     enviaMensagem(socket, bufferSend, sequencia, tam);
-    for(int i = 0; i < 5; i++)
-        printf("%d ", bufferSend[i]);
-    printf("\n");
 }

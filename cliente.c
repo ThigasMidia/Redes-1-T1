@@ -21,10 +21,11 @@ int main() {
         
     printTabuleiro(&t, DOGUI);
     enviaACK(socket, seq);
+    unsigned char quantos = 0;
     
     t.grid[2][3] = TSORO;
     // por enquanto, depois agnt muda pra while nn encontrou todos ou sla
-    while (1) {
+    while (quantos != 8) {
         move = getchar();
         getchar();
         movePlayer(&t, move);
@@ -51,12 +52,12 @@ int main() {
                 printf("%s\n", mensagem.dados);
                 enviaACK(socket, seq);
                 recebeArquivo(socket, mensagem.dados, seq);
+                quantos++;
             }
         }
     }
-    /*
+    
     printf("FOI!!!\n");
-    */
     close(socket);
     free(seq);
     free(buffer);

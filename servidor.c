@@ -32,9 +32,6 @@ int main() {
     }
     while(1) {
         recv(socket, buffer, MAX_BUFFER, 0);
-        for(int i = 0; i < 5; i++)
-            printf("%d ", buffer[i]);
-        printf("\n");
         ret = checaMensagem(buffer);
         if(ret == 1) {
             recebeMensagem(buffer, &mensagem);
