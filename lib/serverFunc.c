@@ -1,8 +1,60 @@
 #include "../include/serverFunc.h"
 #include <dirent.h>
 
+//FUNCAO DE CHECAGEM SE TEM TAMANHO NO DISCO
+int checaTamanhoArquivo(int socket, unsigned char *sequencia, unsigned char *bufferSend, unsigned char *bufferReceive, char *nomearquivo) {
+
+    //PEGA TAMANHO DO ARQUIVO
+    struct stat st;
+    stat(nomearquivo, &st);
+    uint32_t tamanho = (uint32_t)st.st_size;
+    unsigned char *tamBuffer = malloc(4);
+
+    //ARMAZENA TAMANHO NO BUFFER
+    tamBuffer[0] = (tamanho >> 24) & 0xFF;
+    tamBuffer[1] = (tamanho >> 16) & 0xFF;
+    tamBuffer[2] = (tamanho >> 8) & 0xFF;
+    tamBuffer[3] = tamanho & 0xFF;
+    
+    //ENVIA E ESPERA RESPOSTA
+    pacote_t mensagem;
+    criaMensagem(&mensagem, 4, sequencia, 4, tamBuffer);
+    int tam = encheBuffer(bufferSend, &mensagem, NULL, 0, NULL);
+    enviaMensagem(socket, bufferSend, sequencia, tam);
+    int ret = 0, size;
+    while(ret != 1) {
+        recv(socket, bufferReceive, MAX_BUFFER, 0);
+        ret = checaMensagem(bufferReceive);
+        if(ret == 1) {
+            recebeMensagem(bufferReceive, &mensagem);
+            size = 1;
+            if(mensagem.tipo == 15)
+                size = 0;
+        }
+    }
+    free(tamBuffer);
+    return size;
+}
+
+//FUNCAO PARA ENVIO DE EOF
+void enviaEOF(int socket, unsigned char *sequencia) {
+    pacote_t mensagem;
+    unsigned char *buffer;
+    buffer = malloc(MAX_BUFFER);
+    criaMensagem(&mensagem, 0, sequencia, 9, NULL);
+    int tam = encheBuffer(buffer, &mensagem, NULL, 0, NULL);
+    enviaMensagem(socket, buffer, sequencia, tam);
+    free(buffer);
+}
+
 //ENVIA ARQUIVO GENERICO 
 void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned char *sequencia) {
+    
+    unsigned char *bufferReceive = malloc(MAX_BUFFER);
+    if(checaTamanhoArquivo(socket, sequencia, bufferSend, bufferReceive, nome) == 0) {
+        free(bufferReceive);
+        return;
+    }
 
     //ABRE ARQUIVO PARA LEITURA EM BINARIO
     FILE *arquivo = fopen(nome, "rb");
@@ -18,8 +70,7 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
     pacote_t messageSend, messageReceive;
 
     //BUFFER DE RECEBIMENTO E DADOS LIDOS
-    unsigned char *bufferReceive, *dados, *corrections;
-    bufferReceive = malloc(MAX_BUFFER);
+    unsigned char *dados, *corrections;
     dados = malloc(MAX_DADOS);
     corrections = calloc(MAX_DADOS, 1);
 
@@ -121,19 +172,55 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
     free(corrections);
 }
 
-//FUNCAO PARA ENVIO DE EOF
-void enviaEOF(int socket, unsigned char *sequencia) {
+//TRATA QUANDO CLIENTE ENCONTROU UM TESOURO
+void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *sequencia, unsigned char *buffer) {
+    int tipo;
     pacote_t mensagem;
-    unsigned char *buffer;
-    buffer = malloc(MAX_BUFFER);
-    criaMensagem(&mensagem, 0, sequencia, 9, NULL);
-    int tam = encheBuffer(buffer, &mensagem, NULL, 0, NULL);
+    unsigned char formato = nomearquivo[3];
+    if(formato == 't')
+        tipo = 6;
+    else if(formato == 'j')
+        tipo = 8;
+    else
+        tipo = 7;
+
+    char arquivo[256];
+    unsigned char *realNomeArquivo;
+    strncpy(arquivo, "./recebidos/", 12);
+    arquivo[12] = '\0';
+    strncat(arquivo, nomearquivo + 10, 5);
+    realNomeArquivo = arquivo;
+
+    criaMensagem(&mensagem, 17, sequencia, tipo, realNomeArquivo);
+    int tam = encheBuffer(buffer, &mensagem, NULL, 0,  NULL);
     enviaMensagem(socket, buffer, sequencia, tam);
-    free(buffer);
+    while(tam) {
+        recv(socket, buffer, MAX_BUFFER, 0);
+        int ret = checaMensagem(buffer);
+        if(ret == 1) 
+            tam = 0;
+        
+        else if(ret == -1) 
+           enviaNACK(socket, sequencia);
+    }
+}
+
+//CHECA SE PLAYER ESTA EM UM TESOURO
+int checaSeEncontrou(Player p, tesouro *t) {
+   int achou = 8, cont = 0;
+   while(achou == 8 && cont < 8) {
+        if(p.y == t[cont].y && p.x == t[cont].x && !t[cont].encontrado) {
+            achou = cont;
+            t[cont].encontrado = 1;
+        }
+        cont++;
+   }
+
+   return achou;
 }
 
 //INTERPRETA A DIRECAO ENVIADA PELO CLIENTE E ENVIA MENSAGEM CORRESPONDENTE
-void interpretaDirecao(int socket, pacote_t direcao, unsigned char *sequencia, Tabuleiro *t, tesouro *tes, unsigned char *bufferSend) {
+int interpretaDirecao(int socket, pacote_t direcao, unsigned char *sequencia, Tabuleiro *t, tesouro *tes, unsigned char *bufferSend) {
     int msg = 0;
     switch(direcao.tipo) {
         case 10:
@@ -169,64 +256,15 @@ void interpretaDirecao(int socket, pacote_t direcao, unsigned char *sequencia, T
         encontrouArquivo(socket, tes[posi].arquivo, sequencia, bufferSend);
         
         enviaArquivo(socket, bufferSend, (char *)tes[posi].arquivo, sequencia);
+        return 1;
     }
     
-    
-    else { 
-        pacote_t envio;
-        criaMensagem(&envio, 0, sequencia, msg, NULL);
-        int tam = encheBuffer(bufferSend, &envio, NULL, 0 ,NULL);
-        enviaMensagem(socket, bufferSend, sequencia, tam);
-    }
-}
+    pacote_t envio;
+    criaMensagem(&envio, 0, sequencia, msg, NULL);
+    int tam = encheBuffer(bufferSend, &envio, NULL, 0 ,NULL);
+    enviaMensagem(socket, bufferSend, sequencia, tam);
 
-void enviaTamanho(int socket, unsigned char *sequencia) {
-    
-}
-
-void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *sequencia, unsigned char *buffer) {
-    int tipo;
-    pacote_t mensagem;
-    unsigned char formato = nomearquivo[3];
-    if(formato == 't')
-        tipo = 6;
-    else if(formato == 'j')
-        tipo = 8;
-    else
-        tipo = 7;
-
-    char arquivo[256];
-    unsigned char *realNomeArquivo;
-    strncpy(arquivo, "./recebidos/", 12);
-    arquivo[12] = '\0';
-    strncat(arquivo, nomearquivo + 10, 5);
-    realNomeArquivo = arquivo;
-    criaMensagem(&mensagem, 17, sequencia, tipo, realNomeArquivo);
-    int tam = encheBuffer(buffer, &mensagem, NULL, 0,  NULL);
-    enviaMensagem(socket, buffer, sequencia, tam);
-    while(tam) {
-        recv(socket, buffer, MAX_BUFFER, 0);
-        int ret = checaMensagem(buffer);
-        if(ret == 1) 
-            tam = 0;
-        
-        else if(ret == -1) 
-           enviaNACK(socket, sequencia);
-    }
-}
-
-//CHECA SE PLAYER ESTA EM UM TESOURO
-int checaSeEncontrou(Player p, tesouro *t) {
-   int achou = 8, cont = 0;
-   while(achou == 8 && cont < 8) {
-        if(p.y == t[cont].y && p.x == t[cont].x && !t[cont].encontrado) {
-            achou = cont;
-            t[cont].encontrado = 1;
-        }
-        cont++;
-   }
-
-   return achou;
+    return 0;
 }
 
 //ALEATORIZA UMA POSICAO

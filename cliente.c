@@ -6,9 +6,8 @@ int main() {
 
     //FUNCIONOU!!!!!!!
     int socket = cria_raw_socket("veth1");
-    unsigned char *buffer, *dados;
+    unsigned char *buffer;
     buffer = malloc(MAX_BUFFER);
-    dados = malloc(MAX_BUFFER);
     pacote_t mensagem;
     int fim = 1;
     unsigned char *seq;
@@ -41,15 +40,12 @@ int main() {
         int ret = 0;
         enviaDirecao(socket, direct, seq, buffer);
         while(ret == 0) {
-            printf("TA EM 0\n");
             recv(socket, buffer, MAX_BUFFER, 0);
             ret = checaMensagem(buffer);
         }
         if(ret == 1) {
             recebeMensagem(buffer, &mensagem);
-            printf("TIPO: %d\n", mensagem.tipo);
             if(mensagem.tipo == 6 || mensagem.tipo == 7 || mensagem.tipo == 8) {
-                printf("%s\n", mensagem.dados);
                 enviaACK(socket, seq);
                 recebeArquivo(socket, mensagem.dados, seq);
                 quantos++;
@@ -61,6 +57,5 @@ int main() {
     close(socket);
     free(seq);
     free(buffer);
-    free(dados);
     return 0;
 }
