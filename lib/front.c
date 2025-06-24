@@ -138,3 +138,9 @@ void movePlayer (Tabuleiro* t, int direcao) {
     
     return;
 }
+
+void achouTsoro (Tabuleiro *t) {
+    t->grid[t->p.y][t->p.x] = TSORO;
+    
+    return;
+}

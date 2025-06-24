@@ -30,14 +30,17 @@ int main() {
                 fim--;
         }
     }
-    while(1) {
+    while(!achouTudo(tes)) {
         recv(socket, buffer, MAX_BUFFER, 0);
         ret = checaMensagem(buffer);
         if(ret == 1) {
             recebeMensagem(buffer, &mensagem);
             interpretaDirecao(socket, mensagem, seq, &tabuleiro, tes, buffer);
+        } else if (ret == -1) {
+            enviaNACK(socket, seq);
         }
     }
+    printf("FIM!!!\n");
     close(socket);
     free(seq);
     free(buffer);

@@ -250,11 +250,14 @@ int interpretaDirecao(int socket, pacote_t direcao, unsigned char *sequencia, Ta
         default:
             break;
     }
+    
+    printf("player em: %d/%d\n", t->p.x, t->p.y);
+    
     int posi = checaSeEncontrou(t->p, tes);
     if(posi != 8) {
     //LOGICA DE TER ENCONTRADO UM TESOURO
         encontrouArquivo(socket, tes[posi].arquivo, sequencia, bufferSend);
-        
+        printf("\nEncontrou %s!!!\n\n", (char *)tes[posi].arquivo);
         enviaArquivo(socket, bufferSend, (char *)tes[posi].arquivo, sequencia);
         return 1;
     }
@@ -327,4 +330,15 @@ void criaTesouros(tesouro *t) {
             tam++;
         }
     }
+}
+
+int achouTudo (tesouro* t) {
+    int i = 0;
+    while ((i < 8) && t[i].encontrado)
+        i++;
+        
+    if (i < 8) 
+        return 0;
+    else 
+        return 1; 
 }
