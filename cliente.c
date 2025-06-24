@@ -12,44 +12,60 @@ int main() {
     unsigned char *seq;
     seq = malloc(1);
     *seq = 0;
+    int ack;
     
     Tabuleiro t;
     iniciaTabuleiro(&t);
-    char move;
+    unsigned char move[64];
         
     printTabuleiro(&t, DOGUI);
     enviaACK(socket, seq);
     unsigned char quantos = 0;
     
-    t.grid[2][3] = TSORO;
     // por enquanto, depois agnt muda pra while nn encontrou todos ou sla
     while (quantos != 8) {
-        move = getchar();
-        getchar();
-        movePlayer(&t, move);
+        scanf("%s", move);
         int direct;
-        if(move == 'w')
+        if(move[0] == 'w')
             direct = 11;
-        else if (move == 'a')
+        else if (move[0] == 'a')
             direct = 13;
-        else if (move == 's')
+        else if (move[0] == 's')
             direct = 12;
-        else
+        else if (move[0] == 'd')
             direct = 10;
-        int ret = 0;
-        enviaDirecao(socket, direct, seq, buffer);
-        while(ret == 0) {
-            recv(socket, buffer, MAX_BUFFER, 0);
-            ret = checaMensagem(buffer);
+        else {
+            direct = 0;
+            printf("Direção Inválida\n");
         }
-        if(ret == 1) {
-            recebeMensagem(buffer, &mensagem);
+            
+        if (direct) {    
+            int ret = 0;
+            ack = 0;
+            while (!ack) {
+                enviaDirecao(socket, direct, seq, buffer);
+                while(ret == 0) {
+                    recv(socket, buffer, MAX_BUFFER, 0);
+                    ret = checaMensagem(buffer);
+                }
+                if (ret == 1) {
+                    recebeMensagem(buffer, &mensagem);
+                    ack = 1;
+                    if (mensagem.tipo == 1) 
+                        ack = 0;
+                } 
+            }
+            
             if(mensagem.tipo == 6 || mensagem.tipo == 7 || mensagem.tipo == 8) {
+                movePlayer(&t, move[0]);
                 enviaACK(socket, seq);
-                recebeArquivo(socket, (char *)mensagem.dados, seq);
+                recebeArquivo(socket, (unsigned char*)mensagem.dados, seq);
                 quantos++;
             }
-        }
+            else if (mensagem.tipo == 0 || mensagem.tipo == 2) {
+                movePlayer(&t, move[0]);
+            } 
+         }
     }
     
     printf("FOI!!!\n");

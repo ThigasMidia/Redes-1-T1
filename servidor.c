@@ -36,6 +36,8 @@ int main() {
         if(ret == 1) {
             recebeMensagem(buffer, &mensagem);
             interpretaDirecao(socket, mensagem, seq, &tabuleiro, tes, buffer);
+        } else if (ret == -1) {
+            enviaNACK(socket, seq);
         }
     }
     close(socket);

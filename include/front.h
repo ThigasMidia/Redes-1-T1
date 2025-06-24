@@ -23,4 +23,6 @@ void printTabuleiro (Tabuleiro* t, char player);
 // Move o player
 void movePlayer (Tabuleiro* t, int direcao);
 
+// Marca local de tesouro encontrado
+void achouTsoro (Tabuleiro *t);
 #endif
