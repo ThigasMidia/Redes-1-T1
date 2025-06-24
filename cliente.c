@@ -21,6 +21,7 @@ int main() {
     printTabuleiro(&t, DOGUI);
     enviaACK(socket, seq);
     unsigned char quantos = 0;
+    char comando[64] = "open ";
     
     // por enquanto, depois agnt muda pra while nn encontrou todos ou sla
     while (quantos != 8) {
@@ -58,8 +59,12 @@ int main() {
             
             if(mensagem.tipo == 6 || mensagem.tipo == 7 || mensagem.tipo == 8) {
                 movePlayer(&t, move[0]);
+                achouTsoro(&t);
                 enviaACK(socket, seq);
-                recebeArquivo(socket, (unsigned char*)mensagem.dados, seq);
+                recebeArquivo(socket, (char*)mensagem.dados, seq);
+                strcat(comando, (char*)mensagem.dados);
+                system(comando);
+                comando[5] = '\0';
                 quantos++;
             }
             else if (mensagem.tipo == 0 || mensagem.tipo == 2) {
@@ -68,7 +73,7 @@ int main() {
          }
     }
     
-    printf("FOI!!!\n");
+    printf("ACHOU TUDO!!!\n");
     close(socket);
     free(seq);
     free(buffer);

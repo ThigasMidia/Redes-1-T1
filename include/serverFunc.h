@@ -41,4 +41,7 @@ int comparaTesouros(tesouro t1, tesouro t2);
 //FUNCAO DE CRIACAO DE TESOUROS EM POSICOES ALEATORIAS, MAS DIFERENTES
 void criaTesouros(tesouro *t);
 
+//FUNCAO QUE CHECA SE TODOS OS TESOUROS JA FORAM ENCONTRADOS
+int achouTudo (tesouro* tes);
+
 #endif
