@@ -21,6 +21,9 @@ int main() {
     Tabuleiro tabuleiro;
     iniciaTabuleiro(&tabuleiro);
     
+    struct timeval timeout = { .tv_sec = 0, .tv_usec = 0 };
+    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*) &timeout, sizeof(timeout));
+    
     while(fim) {
         recv(socket, buffer, MAX_BUFFER, 0);
         ret = checaMensagem(buffer);

@@ -6,6 +6,7 @@
 #include <linux/if_packet.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <net/if.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -17,6 +18,8 @@
 #define MARCADOR_INI 126 //01111110
 #define MAX_DADOS 127   
 #define MAX_BUFFER 131 //127 + MARCADOR(1) + CHECKSUM(1) + TAM/SEQ/TIPO(2)
+
+#define TIMEOUTMILLIS 200000000000
 
 //STRUCT DE PACOTES PARA ENVIO E RECEBIMENTO PELA REDE
 typedef struct pacote_t {
@@ -82,5 +85,8 @@ void incrementaSequencia(unsigned char *sequencia);
 
 //
 void decrementaSequencia(unsigned char *sequencia);
+
+//
+long long timestamp();
 
 #endif

@@ -1,5 +1,11 @@
 #include "../include/shared.h"
 
+long long timestamp() {
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    return tp.tv_sec*1000 + tp.tv_usec/1000;
+}
+
 int cria_raw_socket(char* nome_interface_rede) {
     // Cria arquivo para o socket sem qualquer protocolo
     int soquete = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
@@ -29,6 +35,11 @@ int cria_raw_socket(char* nome_interface_rede) {
             "Verifique se a interface de rede foi especificada corretamente.\n");
         exit(-1);
     }
+    
+    // pro timeout
+    struct timeval timeout = { .tv_sec = TIMEOUTMILLIS/1000, .tv_usec = (TIMEOUTMILLIS%1000) * 1000 };
+    setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char*) &timeout, sizeof(timeout));
+    
     return soquete;
 }
 
@@ -208,35 +219,3 @@ void incrementaSequencia(unsigned char *sequencia) {
 void decrementaSequencia(unsigned char *sequencia) {
     (*sequencia) = ((*sequencia) + 31) % 32;
 }
-
-//UTILIZEI A MAIN PARA TESTAR TODAS AS FUNCOES ANTERIORES
-/*
-int main() {
-    pacote_t mensagem, teste;
-    mensagem.tamanho = 2;
-    mensagem.sequencia = 25;
-    mensagem.tipo = 13;
-    mensagem.dados[0] = 113;
-    mensagem.dados[1] = 10;
-
-    unsigned char *buffer;
-    buffer = malloc(MAX_BUFFER);
-
-    encheBuffer(buffer, &mensagem);
-
-    printf("%d ", buffer[0]);
-    printf("%d ", buffer[1]);
-    printf("%d ", buffer[2]);
-    //printf("%d ", buffer[3]);
-    for(int i = 4; i < mensagem.tamanho+4; i++)
-        printf("%d ", buffer[i]);
-    printf("\n");
-    recebeMensagem(buffer, &teste);
-    printf("%d/%d\n", teste.tamanho, mensagem.tamanho);
-    printf("%d/%d\n", teste.sequencia, mensagem.sequencia);
-    printf("%d/%d\n", teste.tipo, mensagem.tipo);
-    for(int i = 0; i < mensagem.tamanho; i++)
-        printf("%d/%d\n", teste.dados[i], mensagem.dados[i]);
-    free(buffer);
-    return 0;
-}*/

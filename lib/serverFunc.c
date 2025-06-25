@@ -21,15 +21,23 @@ int checaTamanhoArquivo(int socket, unsigned char *sequencia, unsigned char *buf
     criaMensagem(&mensagem, 4, sequencia, 4, tamBuffer);
     int tam = encheBuffer(bufferSend, &mensagem, NULL, 0, NULL);
     enviaMensagem(socket, bufferSend, sequencia, tam);
-    int ret = 0, size;
-    while(ret != 1) {
-        recv(socket, bufferReceive, MAX_BUFFER, 0);
-        ret = checaMensagem(bufferReceive);
-        if(ret == 1) {
-            recebeMensagem(bufferReceive, &mensagem);
-            size = 1;
-            if(mensagem.tipo == 15)
-                size = 0;
+    int size;
+    int ack = 0;
+    while (!ack) {
+        int ret = 0;
+        long long comeco = timestamp();
+        while(ret != 1 && (timestamp() - comeco <= TIMEOUTMILLIS)) {
+            if (recv(socket, bufferReceive, MAX_BUFFER, 0) > 0)
+                ret = checaMensagem(bufferReceive);
+            else 
+                ret = 0;
+            if(ret == 1) {
+                ack = 1;
+                recebeMensagem(bufferReceive, &mensagem);
+                size = 1;
+                if(mensagem.tipo == 15)
+                    size = 0;
+            }
         }
     }
     free(tamBuffer);
@@ -49,6 +57,9 @@ void enviaEOF(int socket, unsigned char *sequencia) {
 
 //ENVIA ARQUIVO GENERICO 
 void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned char *sequencia) {
+    
+    struct timeval timeout = { .tv_sec = 0, .tv_usec = 0 };
+    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*) &timeout, sizeof(timeout));
     
     unsigned char *bufferReceive = malloc(MAX_BUFFER);
     if(checaTamanhoArquivo(socket, sequencia, bufferSend, bufferReceive, nome) == 0) {
@@ -165,6 +176,10 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
             enviaNACK(socket, sequencia);
     }
     
+    timeout.tv_sec = TIMEOUTMILLIS/1000;
+    timeout.tv_usec = (TIMEOUTMILLIS%1000) * 1000;
+    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*) &timeout, sizeof(timeout));
+    
     fclose(arquivo);
     //LIBERA MEMORIA
     free(dados);
@@ -174,6 +189,9 @@ void enviaArquivo(int socket, unsigned char *bufferSend, char *nome, unsigned ch
 
 //TRATA QUANDO CLIENTE ENCONTROU UM TESOURO
 void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *sequencia, unsigned char *buffer) {
+    struct timeval timeout = { .tv_sec = 0, .tv_usec = 0 };
+    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*) &timeout, sizeof(timeout));
+    
     int tipo;
     pacote_t mensagem;
     unsigned char formato = nomearquivo[3];
@@ -203,6 +221,12 @@ void encontrouArquivo(int socket, unsigned char *nomearquivo, unsigned char *seq
         else if(ret == -1) 
            enviaNACK(socket, sequencia);
     }
+    
+    timeout.tv_sec = TIMEOUTMILLIS/1000;
+    timeout.tv_usec = (TIMEOUTMILLIS%1000) * 1000;
+    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*) &timeout, sizeof(timeout));
+
+    
 }
 
 //CHECA SE PLAYER ESTA EM UM TESOURO
@@ -227,31 +251,33 @@ int interpretaDirecao(int socket, pacote_t direcao, unsigned char *sequencia, Ta
             if(t->p.x != 7) {
                 (t->p.x)++;
                 msg = 2;
+                printf("player em: %d/%d\n", t->p.x, t->p.y);
             }
             break;
         case 11:
             if(t->p.y != 7) {
                 (t->p.y)++;
                 msg = 2;
+                printf("player em: %d/%d\n", t->p.x, t->p.y);
             }
             break;
         case 12:
             if(t->p.y) {
                 (t->p.y)--;
                 msg = 2;
+                printf("player em: %d/%d\n", t->p.x, t->p.y);
             }
             break;
         case 13:
             if(t->p.x) {
                 (t->p.x)--;
                 msg = 2;
+                printf("player em: %d/%d\n", t->p.x, t->p.y);
             }
             break;
         default:
             break;
     }
-    
-    printf("player em: %d/%d\n", t->p.x, t->p.y);
     
     int posi = checaSeEncontrou(t->p, tes);
     if(posi != 8) {

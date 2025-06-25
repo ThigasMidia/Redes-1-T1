@@ -45,16 +45,18 @@ int main() {
             ack = 0;
             while (!ack) {
                 enviaDirecao(socket, direct, seq, buffer);
-                while(ret == 0) {
-                    recv(socket, buffer, MAX_BUFFER, 0);
-                    ret = checaMensagem(buffer);
-                }
-                if (ret == 1) {
-                    recebeMensagem(buffer, &mensagem);
-                    ack = 1;
-                    if (mensagem.tipo == 1) 
-                        ack = 0;
+                long long comeco = timestamp();
+                while((ret != 1) && (timestamp() - comeco <= TIMEOUTMILLIS)) {
+                    if (recv(socket, buffer, MAX_BUFFER, 0)) {
+                        ret = checaMensagem(buffer);
+                        if (ret == 1) {
+                            printf("ret1\n");
+                            recebeMensagem(buffer, &mensagem);
+                            ack = 1;
+                        }
+                    }
                 } 
+                printf("%lld\n", timestamp() - comeco);
             }
             
             if(mensagem.tipo == 6 || mensagem.tipo == 7 || mensagem.tipo == 8) {
