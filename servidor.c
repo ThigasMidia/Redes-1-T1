@@ -38,7 +38,8 @@ int main() {
         ret = checaMensagem(buffer);
         if(ret == 1) {
             recebeMensagem(buffer, &mensagem);
-            interpretaDirecao(socket, mensagem, seq, &tabuleiro, tes, buffer);
+            if(mensagem.tipo == 10 || mensagem.tipo == 11 || mensagem.tipo == 12 || mensagem.tipo == 13)
+                interpretaDirecao(socket, mensagem, seq, &tabuleiro, tes, buffer);
         } else if (ret == -1) {
             enviaNACK(socket, seq);
         }
